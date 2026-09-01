@@ -9,6 +9,13 @@ React DevTools / TanStack Query / TanStack Router runtime state of your dev tabs
 npx agent-debug-mcp            # 127.0.0.1:9333
 ```
 
+## Chrome extension
+
+The relay needs its companion extension in Chrome:
+[**agent-debug-mcp-0.1.4-chrome.zip**](https://github.com/muhsinmoosa/agent-debug-mcp/raw/main/releases/agent-debug-mcp-0.1.4-chrome.zip)
+— unzip it, then Chrome → `chrome://extensions` → enable **Developer mode** → **Load unpacked** → the unzipped
+folder. (Or build from [source](https://github.com/muhsinmoosa/agent-debug-mcp): `pnpm --filter @devtools-mcp/extension build`.)
+
 With the extension loaded, Chrome pairs by itself (the extension polls `127.0.0.1:9333/pair.json`); for another
 host/port enter it in the extension popup or open `http://<host>:<port>/pair` once. Then point your agent at it:
 

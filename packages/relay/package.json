@@ -1,6 +1,6 @@
 {
   "name": "agent-debug-mcp",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Agent Debug MCP: local MCP server (stdio + streamable HTTP) bridging the Agent Debug MCP Chrome extension to coding agents, with built-in browser automation (embedded Playwright MCP re-exported as page_* tools), a CDP endpoint for external Playwright clients, `init`/`doctor` CLI, and a Vite plugin (agent-debug-mcp/vite) that exposes TanStack Query/Router to the tools",
   "keywords": [
     "mcp",
