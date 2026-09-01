@@ -36,6 +36,7 @@ pnpm --filter agent-debug-mcp exec tsx src/cli.ts init     # write/merge .mcp.js
 pnpm --filter agent-debug-mcp exec tsx src/cli.ts doctor <url>   # check relay → extension → CDP → tab, with fixes
 pnpm dev:demo                                    # demo app on http://localhost:5199
 pnpm docs:tools                                  # regenerate docs/TOOLS.md from the descriptor modules
+pnpm release [patch|minor|major|x.y.z] [-- --dry-run]   # bump ext+relay versions, zip extension → releases/, update npm README link, publish, commit+tag
 pnpm --filter e2e exec tsx scripts/dogfood-cookieyes.mts <url>   # run the tools against any localhost React app
 ```
 
@@ -143,6 +144,13 @@ The e2e suite loads `packages/extension/.output/chrome-mv3` — rebuild the exte
 - React (dev) logs caught errors/warnings inside `runWithFiberInDEV`, so `renderer.getCurrentFiber()` identifies the
   culprit while a console patch runs — that is how `page_get_errors` gets component stacks without the official
   DevTools' console patching.
+- The official React DevTools extension (v7) guards its hook install with `window.hasOwnProperty('__REACT_DEVTOOLS_
+  GLOBAL_HOOK__')` **twice** (outer + inner), and its panel only works with the hook its own installer creates
+  (renderer attach happens inside its `inject()`; `initBackend` no longer attaches). bippy 0.7.3's one-shot
+  hasOwnProperty trap defuses only the first check, so when we install first the official panel showed "not using
+  React" and backendManager crashed on `hook.backends.has`. Fix: `tools-react/src/cooperative-hook.ts` installs an
+  official-shaped hook with a diplomacy trap that survives both checks and yields the slot (hook.ts rebinds via
+  `onTakeover`). Never let bippy's `getRDTHook()` be the first-run installer.
 
 ## Do not
 
