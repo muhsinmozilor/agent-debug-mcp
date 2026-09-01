@@ -12,7 +12,7 @@ npx agent-debug-mcp            # 127.0.0.1:9333
 ## Chrome extension
 
 The relay needs its companion extension in Chrome:
-[**agent-debug-mcp-0.1.7-chrome.zip**](https://github.com/muhsinmozilor/agent-debug-mcp/raw/main/releases/agent-debug-mcp-0.1.7-chrome.zip)
+[**agent-debug-mcp-0.1.8-chrome.zip**](https://github.com/muhsinmozilor/agent-debug-mcp/raw/main/releases/agent-debug-mcp-0.1.8-chrome.zip)
 — unzip it, then Chrome → `chrome://extensions` → enable **Developer mode** → **Load unpacked** → the unzipped
 folder. (Or build from [source](https://github.com/muhsinmozilor/agent-debug-mcp): `pnpm --filter @devtools-mcp/extension build`.)
 
