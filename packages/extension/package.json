@@ -1,0 +1,27 @@
+{
+  "name": "@devtools-mcp/extension",
+  "version": "0.1.3",
+  "private": true,
+  "type": "module",
+  "description": "Agent Debug MCP Chrome extension (MV3, WXT)",
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "typecheck": "wxt prepare && tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "postinstall": "wxt prepare"
+  },
+  "dependencies": {
+    "@devtools-mcp/protocol": "workspace:*",
+    "@devtools-mcp/tools-react": "workspace:*",
+    "@devtools-mcp/tools-tanstack-query": "workspace:*",
+    "@devtools-mcp/tools-tanstack-router": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.2.7",
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.11",
+    "wxt": "^0.21.4"
+  }
+}

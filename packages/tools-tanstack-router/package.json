@@ -1,0 +1,28 @@
+{
+  "name": "@devtools-mcp/tools-tanstack-router",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Page-side TanStack Router tools (router discovered via window.__TANSTACK_ROUTER__ or window.router)",
+  "exports": {
+    ".": { "types": "./src/index.ts", "default": "./src/index.ts" },
+    "./descriptors": { "types": "./src/descriptors.ts", "default": "./src/descriptors.ts" }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@devtools-mcp/protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "@tanstack/history": "^1.162.1",
+    "@tanstack/react-router": "^1.170.32",
+    "@types/react": "^19.2.0",
+    "jsdom": "^28.0.0",
+    "react": "19.2.8",
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.11"
+  }
+}

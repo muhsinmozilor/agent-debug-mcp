@@ -1,0 +1,83 @@
+{
+  "name": "agent-debug-mcp",
+  "version": "0.1.3",
+  "description": "Agent Debug MCP: local MCP server (stdio + streamable HTTP) bridging the Agent Debug MCP Chrome extension to coding agents, with built-in browser automation (embedded Playwright MCP re-exported as page_* tools), a CDP endpoint for external Playwright clients, `init`/`doctor` CLI, and a Vite plugin (agent-debug-mcp/vite) that exposes TanStack Query/Router to the tools",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "react",
+    "devtools",
+    "tanstack",
+    "playwright",
+    "vite-plugin",
+    "chrome-extension"
+  ],
+  "license": "MIT",
+  "author": "Muhsin Moosa",
+  "homepage": "https://github.com/muhsinmoosa/agent-debug-mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muhsinmoosa/agent-debug-mcp.git",
+    "directory": "packages/relay"
+  },
+  "bugs": {
+    "url": "https://github.com/muhsinmoosa/agent-debug-mcp/issues"
+  },
+  "type": "module",
+  "bin": {
+    "agent-debug-mcp": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./vite": {
+      "types": "./dist/vite.d.ts",
+      "default": "./dist/vite.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "dev": "tsx src/cli.ts",
+    "build": "tsup",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@playwright/mcp": "0.0.79",
+    "ws": "^8.21.3",
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "vite": ">=5"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@devtools-mcp/protocol": "workspace:*",
+    "@devtools-mcp/tools-react": "workspace:*",
+    "@devtools-mcp/tools-tanstack-query": "workspace:*",
+    "@devtools-mcp/tools-tanstack-router": "workspace:*",
+    "@types/node": "^24.10.0",
+    "@types/ws": "^8.18.1",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.0",
+    "typescript": "~5.9.3",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

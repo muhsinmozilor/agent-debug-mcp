@@ -1,0 +1,25 @@
+{
+  "name": "@devtools-mcp/tools-tanstack-query",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Page-side TanStack Query tools (QueryClient discovered via window.__TANSTACK_QUERY_CLIENT__)",
+  "exports": {
+    ".": { "types": "./src/index.ts", "default": "./src/index.ts" },
+    "./descriptors": { "types": "./src/descriptors.ts", "default": "./src/descriptors.ts" }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@devtools-mcp/protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "@tanstack/query-core": "^5.102.6",
+    "jsdom": "^28.0.0",
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.11"
+  }
+}

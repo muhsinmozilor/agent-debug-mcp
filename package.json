@@ -1,0 +1,27 @@
+{
+  "name": "agent-debug-mcp-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Agent Debug MCP \u2014 React DevTools + TanStack state for coding agents over MCP: Chrome extension + local relay (npm: agent-debug-mcp)",
+  "license": "MIT",
+  "packageManager": "pnpm@11.24.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm -r --filter './packages/**' build",
+    "typecheck": "pnpm -r --filter './packages/**' typecheck",
+    "test": "pnpm -r --filter './packages/**' test",
+    "test:e2e": "pnpm --filter e2e test",
+    "dev:relay": "pnpm --filter agent-debug-mcp dev",
+    "dev:ext": "pnpm --filter @devtools-mcp/extension dev",
+    "dev:demo": "pnpm --filter @devtools-mcp/demo-app dev",
+    "docs:tools": "pnpm --filter agent-debug-mcp exec tsx ../../scripts/gen-tool-docs.mts",
+    "release:relay": "bash scripts/publish-relay.sh"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.11",
+    "@types/node": "^24.10.0"
+  }
+}
