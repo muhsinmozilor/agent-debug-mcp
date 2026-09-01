@@ -1,6 +1,6 @@
 {
   "name": "agent-debug-mcp",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Agent Debug MCP: local MCP server (stdio + streamable HTTP) bridging the Agent Debug MCP Chrome extension to coding agents, with built-in browser automation (embedded Playwright MCP re-exported as page_* tools), a CDP endpoint for external Playwright clients, `init`/`doctor` CLI, and a Vite plugin (agent-debug-mcp/vite) that exposes TanStack Query/Router to the tools",
   "keywords": [
     "mcp",
@@ -14,14 +14,14 @@
   ],
   "license": "MIT",
   "author": "Muhsin Moosa",
-  "homepage": "https://github.com/muhsinmoosa/agent-debug-mcp#readme",
+  "homepage": "https://github.com/muhsinmozilor/agent-debug-mcp#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/muhsinmoosa/agent-debug-mcp.git",
+    "url": "git+https://github.com/muhsinmozilor/agent-debug-mcp.git",
     "directory": "packages/relay"
   },
   "bugs": {
-    "url": "https://github.com/muhsinmoosa/agent-debug-mcp/issues"
+    "url": "https://github.com/muhsinmozilor/agent-debug-mcp/issues"
   },
   "type": "module",
   "bin": {
