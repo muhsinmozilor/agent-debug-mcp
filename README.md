@@ -12,17 +12,48 @@ extension connects to.
 
 ## What the agent can do
 
-| Area | Tools |
+| Tool | What it does |
 |---|---|
-| Tabs | list attached tabs and their capabilities, open a URL |
-| Page | `page_snapshot` — accessibility-style outline with the owning component per element; `page_get_errors` — exceptions, console errors, React error-boundary catches, failed queries/mutations, router errors since your last check |
-| React | `react_explain` (one call: props/hooks/contexts/DOM/source), component tree, inspect props/state/hooks/contexts, search, DOM ↔ component, source location, highlight / pick elements |
-| React (mutating) | override props or hook state, force re-render |
-| React profiling | start/stop profiling, per-commit "why did it render", live render digest |
-| TanStack Query | list / inspect queries and mutations; invalidate, refetch, set data, remove (mutating) |
-| TanStack Router | current state, route tree, matches; navigate, invalidate (mutating) |
+| **Tabs** | |
+| `tabs_list` | List attached tabs: url, title, capabilities (`react`, `tanstack_query`, `tanstack_router`), mutation gating, connection. Call this first. |
+| `tabs_open` † | Open a URL in a new tab (localhost / allowlisted origins) and wait until it attaches. |
+| **Page** | |
+| `page_snapshot` | Accessibility-style outline of the page: role, name, state, a CSS selector *and* the owning React component per element. |
+| `page_get_errors` | Runtime errors since load: uncaught exceptions, `console.error` with component stacks, error-boundary catches, failed queries/mutations, router errors. |
+| `page_highlight` | Draw a temporary highlight overlay around a component or CSS-selector matches. |
+| `page_element_at_point` | The DOM element at viewport (x, y) plus the React component that rendered it. |
+| `page_pick_element` | Hover-to-highlight pick mode; the user's next click is captured and returned. |
+| **React** | |
+| `react_explain` | One-call summary of the component behind a DOM element: props, hooks, contexts, owners, rendered DOM, source location. |
+| `react_get_renderers` | React version, dev/prod build, root count, how the DevTools hook was obtained, supported capabilities. |
+| `react_get_tree` | The mounted component tree as a paginated pre-order list. |
+| `react_inspect_element` | One component in depth: props, state, hooks, contexts, owner chain, DOM nodes. |
+| `react_search_components` | Find mounted components by display-name regex and/or a props substring. |
+| `react_find_by_dom` | CSS selector → the React component(s) that rendered the matching element(s), with ancestors. |
+| `react_get_dom_nodes` | The host DOM nodes a component renders (tag, unique selector, rect, text preview). |
+| `react_get_source` | Where a component is defined and where its JSX was created (file:line, source-mapped). |
+| `react_override_value` † | Set a prop / hook / state value on a mounted component and re-render it. |
+| `react_force_rerender` † | Schedule an update on a component subtree without changing props or state. |
+| `react_profile_start` / `stop` | Record React commits; `stop` summarises render causes, hottest and most-rendered components. |
+| `react_profile_get_commits` | Page through recorded commits: per-component phase, causes, changed props/hooks, timings. |
+| `react_watch_renders` | Record for a duration, then return a render digest and a compact timeline (`Counter(props)`, `App(hooks)`, …). |
+| **TanStack Query** | |
+| `tanstack_query_list_queries` | Every cached query: key, status, fetchStatus, staleness, observers, data preview. |
+| `tanstack_query_get_query` | Full detail of one query: state, options, observers. |
+| `tanstack_query_list_mutations` | Mutations in the cache: key, status, failure count, variables preview. |
+| `tanstack_query_get_mutation` | Full detail of one mutation: state and options. |
+| `tanstack_query_invalidate` † | Mark matching queries stale and refetch the active ones. |
+| `tanstack_query_refetch` † | Refetch matching queries and wait for them to settle. |
+| `tanstack_query_set_data` † | Replace one query's cached data. |
+| `tanstack_query_remove` † | Drop matching queries from the cache, or reset them to initial data. |
+| **TanStack Router** | |
+| `tanstack_router_get_state` | Router status, current location and active matches (params, search, loader state, errors). |
+| `tanstack_router_list_routes` | Flat route tree: id, path, parent, which options each route defines (loader, component, …). |
+| `tanstack_router_get_match` | One active match in depth: params, search, loaderData, context, error. |
+| `tanstack_router_navigate` † | `router.navigate({ to, params, search, … })`, waiting until the router settles. |
+| `tanstack_router_invalidate` † | Re-run `beforeLoad`/loaders for the current matches and wait until settled. |
 
-Mutating tools are gated per origin (toggle in the popup; on by default for localhost). All dev tabs are visible to
+Tools marked † mutate the app; they are gated per origin (toggle in the popup; on by default for localhost). All dev tabs are visible to
 the agent by default; the popup's **Debug only this tab** restricts it to one tab (the rest go into standby and
 reconnect with one click), and the toolbar icon shows a green dot on every tab the agent can reach.
 Full reference: [`docs/TOOLS.md`](docs/TOOLS.md).
