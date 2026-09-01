@@ -151,6 +151,12 @@ The e2e suite loads `packages/extension/.output/chrome-mv3` — rebuild the exte
   React" and backendManager crashed on `hook.backends.has`. Fix: `tools-react/src/cooperative-hook.ts` installs an
   official-shaped hook with a diplomacy trap that survives both checks and yields the slot (hook.ts rebinds via
   `onTakeover`). Never let bippy's `getRDTHook()` be the first-run installer.
+- **bippy's main entry auto-installs its minimal hook as an import side effect** (`dist/index.js` does
+  `import "./install-hook-only.js"`), so by the time `initReactHook` runs, a bippy hook already owns the slot and
+  "a hook exists" does not mean adopt. `initReactHook` evicts an untouched bippy auto-hook (bippy marker, zero
+  renderers, configurable) plus bippy's own one-shot hasOwnProperty trap before the cooperative install
+  (`test/bippy-eviction.test.tsx` replays the real globalThis flow — most other tests mask this with custom
+  targets or pre-seeded hooks).
 
 ## Do not
 

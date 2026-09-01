@@ -127,7 +127,20 @@ function buildState(target: typeof globalThis, weInstalled: boolean): ReactHookS
  */
 export function initReactHook(target: typeof globalThis = globalThis): ReactHookState {
   if (state) return state;
-  const hadHook = Object.prototype.hasOwnProperty.call(target, '__REACT_DEVTOOLS_GLOBAL_HOOK__');
+  // bippy's main entry auto-installs its minimal hook on globalThis as an import side effect — it
+  // runs before this function ever can, so "a hook exists" does not mean someone else owns the
+  // slot. An untouched bippy auto-hook (bippy's marker, zero renderers, still configurable) is our
+  // own artifact: evict it — and the one-shot hasOwnProperty trap bippy arms alongside it, which
+  // would otherwise shadow our diplomacy — so the cooperative official-shaped hook takes the slot.
+  const desc = Object.getOwnPropertyDescriptor(target, '__REACT_DEVTOOLS_GLOBAL_HOOK__');
+  const existing = desc ? (target as { __REACT_DEVTOOLS_GLOBAL_HOOK__?: ReactDevToolsGlobalHook }).__REACT_DEVTOOLS_GLOBAL_HOOK__ : undefined;
+  let hadHook = !!desc;
+  if (hadHook && desc?.configurable && existing?._isBippyHook === true && existing.renderers.size === 0) {
+    Reflect.deleteProperty(target, '__REACT_DEVTOOLS_GLOBAL_HOOK__');
+    const trap = Object.getOwnPropertyDescriptor(target, 'hasOwnProperty');
+    if (trap?.configurable) Reflect.deleteProperty(target, 'hasOwnProperty');
+    hadHook = false;
+  }
   if (!hadHook) {
     installCooperativeHook(target, {
       onTakeover: () => {
