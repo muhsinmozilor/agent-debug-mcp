@@ -83,11 +83,13 @@ if [ "$DRY" = 1 ]; then
 fi
 bash "$ROOT/scripts/publish-relay.sh" ${PUBLISH_ARGS[@]+"${PUBLISH_ARGS[@]}"}
 
-# 6. Commit exactly the release files (never the rest of the working tree) and tag.
+# 6. Keep only the newest zip in releases/ (old npm READMEs pin their own version, so their links go
+#    stale by design), then commit exactly the release files (never the rest of the working tree) and tag.
 cd "$ROOT"
-git add "packages/relay/package.json" "packages/extension/package.json" \
-        "packages/relay/src/index.ts" "packages/relay/README.md" \
-        "releases/agent-debug-mcp-$NEW-chrome.zip"
+find "$RELEASES" -name "agent-debug-mcp-*-chrome.zip" ! -name "agent-debug-mcp-$NEW-chrome.zip" -delete
+git add -A "releases" \
+        "packages/relay/package.json" "packages/extension/package.json" \
+        "packages/relay/src/index.ts" "packages/relay/README.md"
 git commit -m "release: v$NEW"
 git tag "v$NEW"
 echo "▶ committed and tagged v$NEW — publish the zip link with: git push --follow-tags"
