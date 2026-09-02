@@ -9,6 +9,5 @@ test-results/
 playwright-report/
 .env
 .env.*
-!.env.example
 .playwright-mcp/
 /scripts/

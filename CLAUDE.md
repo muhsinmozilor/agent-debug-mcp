@@ -35,8 +35,8 @@ pnpm dev:relay                                   # tsx packages/relay/src/cli.ts
 pnpm --filter agent-debug-mcp exec tsx src/cli.ts init     # write/merge .mcp.json (single agent-debug entry; --external-playwright adds a separate Playwright MCP)
 pnpm --filter agent-debug-mcp exec tsx src/cli.ts doctor <url>   # check relay → extension → CDP → tab, with fixes
 pnpm dev:demo                                    # demo app on http://localhost:5199
-pnpm docs:tools                                  # regenerate docs/TOOLS.md from the descriptor modules
-pnpm release [patch|minor|major|x.y.z] [-- --dry-run]   # bump ext+relay versions, zip extension → releases/, update npm README link, publish, commit+tag
+pnpm --filter agent-debug-mcp exec tsx ../../scripts/gen-tool-docs.mts   # regenerate docs/TOOLS.md (maintainer-local script, git-ignored)
+bash scripts/release.sh [patch|minor|major|x.y.z] [--dry-run]   # maintainer-local: bump ext+relay, zip extension → releases/, publish to npm, commit+tag
 pnpm --filter e2e exec tsx scripts/dogfood-cookieyes.mts <url>   # run the tools against any localhost React app
 ```
 
@@ -96,7 +96,7 @@ The e2e suite loads `packages/extension/.output/chrome-mv3` — rebuild the exte
 2. Implement `defineTool({...meta, execute})` in `src/tools/*.ts`; register it in the package's `create*Tools()`.
 3. Unit test in that package (`test/*.test.ts(x)`; React tests must `import './hook-first.js'` **before** react-dom).
 4. If it mutates: `mutation: true` (gating is automatic once the descriptor module is wired).
-5. Rebuild the extension, add/extend an e2e spec in `e2e/tests`, run `pnpm test:e2e`, then `pnpm docs:tools`.
+5. Rebuild the extension, add/extend an e2e spec in `e2e/tests`, run `pnpm test:e2e`, then regenerate `docs/TOOLS.md` (maintainer-local gen-tool-docs script).
 
 ## Testing notes
 

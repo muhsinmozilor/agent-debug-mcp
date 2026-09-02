@@ -15,10 +15,7 @@
     "test:e2e": "pnpm --filter e2e test",
     "dev:relay": "pnpm --filter agent-debug-mcp dev",
     "dev:ext": "pnpm --filter @devtools-mcp/extension dev",
-    "dev:demo": "pnpm --filter @devtools-mcp/demo-app dev",
-    "docs:tools": "pnpm --filter agent-debug-mcp exec tsx ../../scripts/gen-tool-docs.mts",
-    "release:relay": "bash scripts/publish-relay.sh",
-    "release": "bash scripts/release.sh"
+    "dev:demo": "pnpm --filter @devtools-mcp/demo-app dev"
   },
   "devDependencies": {
     "typescript": "~5.9.3",

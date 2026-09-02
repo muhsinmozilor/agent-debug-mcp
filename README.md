@@ -212,7 +212,6 @@ The same tools are also registered into `document.modelContext` when Chrome's We
 pnpm test              # unit tests in every package
 pnpm typecheck
 pnpm test:e2e          # Playwright; needs the extension build, starts the demo app itself
-pnpm docs:tools        # regenerate docs/TOOLS.md
 ```
 
 ## Documentation
@@ -222,7 +221,7 @@ pnpm docs:tools        # regenerate docs/TOOLS.md
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — layers, request lifecycle, key decisions
 - [`docs/PROTOCOL.md`](docs/PROTOCOL.md) — wire frames, error codes, encoding
 - [`docs/SECURITY.md`](docs/SECURITY.md) — trust boundaries, pairing, mutation gate
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — adding tools, releasing
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — adding tools
 - [`CHANGELOG.md`](CHANGELOG.md)
 
 ## License
