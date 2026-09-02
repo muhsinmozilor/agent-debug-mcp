@@ -200,11 +200,6 @@ No Chrome flags: the extension's `chrome.debugger` carries the protocol, so Chro
 debugging this browser" bar while a client is connected. `--no-cdp` disables the endpoint (and with it the built-in
 browser tools); `--no-playwright` disables just the built-in tools.
 
-## Without the relay
-
-The same tools are also announced to `chrome-devtools-mcp` via its third-party tool discovery
-(`--categoryExperimentalThirdParty`).
-
 ## Development
 
 ```bash

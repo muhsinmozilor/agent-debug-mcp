@@ -18,7 +18,6 @@ import { captureQueryErrors, createTanstackQueryTools, findQueryClient, watchQue
 import { captureRouterErrors, createTanstackRouterTools, findRouter, watchRouter } from '@devtools-mcp/tools-tanstack-router';
 import { ToolRegistry } from '../lib/registry';
 import { DEV_MATCHES } from '../lib/constants';
-import { exposeThirdPartyDevtools } from '../lib/expose';
 
 declare const __EXT_VERSION__: string | undefined;
 
@@ -57,9 +56,6 @@ export default defineContentScript({
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startQueryWatch, { once: true });
     else startQueryWatch();
 
-    // Secondary exposure path (chrome-devtools-mcp third-party tools).
-    exposeThirdPartyDevtools(registry);
-    (window as unknown as { __DTMCP_EXPOSURE__?: unknown }).__DTMCP_EXPOSURE__ = { thirdParty: true };
 
     let port: MessagePort | null = null;
     const inflight = new Map<string, AbortController>();

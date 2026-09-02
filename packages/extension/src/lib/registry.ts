@@ -1,7 +1,6 @@
 /**
  * Page-side tool registry (MAIN world). Single source of truth for the tools available on this
- * document; exposed to (a) the relay via the ISOLATED bridge and (b) chrome-devtools-mcp's
- * `devtoolstooldiscovery` event.
+ * document; exposed to the relay via the ISOLATED bridge.
  */
 import {
   DevtoolsError,

@@ -13,7 +13,6 @@ and let it act (override values, invalidate queries, navigate) under an explicit
 │ tools-react        tools-tanstack-query   tools-tanstack-router                    │
 │ (DevTools hook + bippy)  (QueryClient global)   (router global)                    │
 │                        ▼ ToolRegistry: ToolDefinition[]                            │
-│   ├─ window 'devtoolstooldiscovery' → respondWith({tools})  (chrome-devtools-mcp)  │
 │   └─ MessageChannel port (nonce handshake) ─────────────────────────────────┐      │
 └─────────────────────────────────────────────────────────────────────────────┼──────┘
                                       ISOLATED content script (chrome.*, zod validation, mutation gate)
@@ -28,8 +27,7 @@ and let it act (override values, invalidate queries, navigate) under an explicit
 Runs before the page's JavaScript so the React DevTools hook exists when React loads. Owns the `ToolRegistry`
 (the single definition of every tool for this document), tracks capabilities (`react` when a renderer injects,
 `tanstack_query` / `tanstack_router` when the app sets the globals — polled 250 ms for 30 s), executes tool
-calls with an `AbortController`, and exposes the same registry to chrome-devtools-mcp's
-`devtoolstooldiscovery` event.
+calls with an `AbortController`.
 
 It also owns the document's `ErrorLog`: console.error/warn and window error/unhandledrejection hooks are installed
 before the app runs (with React component stacks taken from the renderer's current fiber), and TanStack Query/Router

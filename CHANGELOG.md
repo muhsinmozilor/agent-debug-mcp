@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **chrome-devtools-mcp third-party exposure removed** (the `devtoolstooldiscovery` listener): unused
+  integration; the relay is now the only way tools leave the page.
+
+## 0.2.0 — 2026-09-02
+
 Internal cleanup; small agent-facing polish.
 
 - **The stdio entrypoint no longer runs the relay in-process.** When an MCP client spawns `npx agent-debug-mcp`,

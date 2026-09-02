@@ -4,7 +4,7 @@ Chrome MV3 extension built with WXT.
 
 | Entrypoint | World | Role |
 |---|---|---|
-| `src/entrypoints/main.content.ts` | MAIN, `document_start` | installs/adopts the React DevTools hook, owns the `ToolRegistry`, exposes tools to the relay and `devtoolstooldiscovery` |
+| `src/entrypoints/main.content.ts` | MAIN, `document_start` | installs/adopts the React DevTools hook, owns the `ToolRegistry`, exposes tools to the relay |
 | `src/entrypoints/relay.content.ts` | ISOLATED, `document_start` | nonce handshake with MAIN, frame validation, tab lifecycle, mutation gate, pairing-page detection |
 | `src/entrypoints/background.ts` | service worker | relay discovery (`GET 127.0.0.1:9333/pair.json`), WebSocket to the relay, tab registry, `tab.open`, allowlist registration, popup messages |
 | `src/entrypoints/popup/` | UI | relay status, Pair button for non-default relay URLs, "debug only this tab" / per-tab connect, per-origin mutation toggles |
