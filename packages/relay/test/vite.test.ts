@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Plugin } from 'vite';
-import { devtoolsMcp, QUERY_MODULE, ROUTER_MODULE } from '../src/vite.js';
+import { agentDebugMcp, QUERY_MODULE, ROUTER_MODULE } from '../src/vite.js';
 
 type Hook<K extends keyof Plugin> = Extract<Plugin[K], (...a: never[]) => unknown>;
 const call = <K extends keyof Plugin>(p: Plugin, k: K, ...args: unknown[]) => {
@@ -11,7 +11,7 @@ const call = <K extends keyof Plugin>(p: Plugin, k: K, ...args: unknown[]) => {
 
 describe('agent-debug-mcp/vite', () => {
   it('aliases the TanStack entry points to wrappers that register instances on window, dev only', () => {
-    const p = devtoolsMcp();
+    const p = agentDebugMcp();
     expect(p.apply).toBe('serve');
     expect(p.enforce).toBe('pre');
     // Pretend both packages are installed (the demo app has them).
@@ -33,12 +33,12 @@ describe('agent-debug-mcp/vite', () => {
   });
 
   it('can be limited to one library and stays inert for packages that are not installed', () => {
-    const p = devtoolsMcp({ router: false });
+    const p = agentDebugMcp({ router: false });
     call(p, 'config', { root: `${process.cwd()}/../demo-app` }, { command: 'serve', mode: 'development' });
     expect(call(p, 'resolveId', ROUTER_MODULE, '/src/main.tsx')).toBeNull();
     expect(call(p, 'resolveId', QUERY_MODULE, '/src/main.tsx')).not.toBeNull();
 
-    const none = devtoolsMcp();
+    const none = agentDebugMcp();
     expect(call(none, 'config', { root: '/definitely/not/a/project' }, { command: 'serve', mode: 'development' })).toBeUndefined();
     expect(call(none, 'resolveId', QUERY_MODULE, '/src/main.tsx')).toBeNull();
   });

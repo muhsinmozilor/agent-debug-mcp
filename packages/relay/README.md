@@ -116,8 +116,8 @@ safe: the extension picks up the new token on its next connection attempt.
 Exposes your TanStack Query client and Router to the extension in `vite dev` with no app-code change:
 
 ```ts
-import { devtoolsMcp } from 'agent-debug-mcp/vite';
-export default defineConfig({ plugins: [react(), devtoolsMcp()] }); // options: { query?: boolean; router?: boolean }
+import { agentDebugMcp } from 'agent-debug-mcp/vite';
+export default defineConfig({ plugins: [react(), agentDebugMcp()] }); // options: { query?: boolean; router?: boolean }
 ```
 
 `npm i -D agent-debug-mcp` provides it; production builds are untouched.

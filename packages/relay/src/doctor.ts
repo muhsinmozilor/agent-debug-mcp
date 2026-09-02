@@ -62,7 +62,7 @@ interface TabSummary {
 }
 
 const TANSTACK_HINT =
-  'If the app uses it: add the Vite plugin (`import { devtoolsMcp } from "agent-debug-mcp/vite"` → `plugins: [react(), devtoolsMcp()]`), or expose the instance in dev: `if (import.meta.env.DEV) { window.__TANSTACK_QUERY_CLIENT__ = queryClient; window.__TANSTACK_ROUTER__ = router; }`';
+  'If the app uses it: add the Vite plugin (`import { agentDebugMcp } from "agent-debug-mcp/vite"` → `plugins: [react(), agentDebugMcp()]`), or expose the instance in dev: `if (import.meta.env.DEV) { window.__TANSTACK_QUERY_CLIENT__ = queryClient; window.__TANSTACK_ROUTER__ = router; }`';
 
 export async function runDoctor(opts: DoctorOptions = {}): Promise<DoctorReport> {
   const checks: Check[] = [];

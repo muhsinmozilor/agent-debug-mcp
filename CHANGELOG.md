@@ -12,6 +12,8 @@ Internal cleanup; small agent-facing polish.
   New: `agent-debug-mcp stop` (stops the daemon; also the fix for the `pnpm test:e2e` port-9333 conflict) and
   `--no-daemon` (restores in-process stdio serving; `--no-http` implies it).
 
+- The Vite plugin export is now `agentDebugMcp()` (was `devtoolsMcp()`), matching the package name; the old
+  name remains as a deprecated alias.
 - **WebMCP exposure removed.** The extension no longer registers tools into `document.modelContext` — Chrome’s
   WebMCP is still an origin-trial experiment and its API surface moved (`navigator.modelContext`). The
   `devtoolstooldiscovery` (chrome-devtools-mcp third-party tools) exposure stays.

@@ -127,8 +127,8 @@ npm i -D agent-debug-mcp
 ```
 ```ts
 // vite.config.ts
-import { devtoolsMcp } from 'agent-debug-mcp/vite';
-export default defineConfig({ plugins: [react(), devtoolsMcp()] });
+import { agentDebugMcp } from 'agent-debug-mcp/vite';
+export default defineConfig({ plugins: [react(), agentDebugMcp()] });
 ```
 
 (Same package as the relay: `npx agent-debug-mcp` runs the server from npm's cache, the devDependency provides the

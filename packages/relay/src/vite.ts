@@ -1,5 +1,5 @@
 /**
- * Agent Debug MCP Vite plugin — `import { devtoolsMcp } from 'agent-debug-mcp/vite'`. Built as its own entry with
+ * Agent Debug MCP Vite plugin — `import { agentDebugMcp } from 'agent-debug-mcp/vite'`. Built as its own entry with
  * `vite` external; it must not import anything from the relay so Vite's config bundle stays tiny.
  *
  * TanStack exposes nothing globally, so Agent Debug MCP normally needs the app to run
@@ -12,7 +12,7 @@ import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { Plugin } from 'vite';
 
-export interface DevtoolsMcpOptions {
+export interface AgentDebugMcpOptions {
   /** Expose `QueryClient` instances from `@tanstack/react-query` (default true). */
   query?: boolean;
   /** Expose routers created with `createRouter` from `@tanstack/react-router` (default true). */
@@ -57,7 +57,7 @@ function installed(root: string, pkg: string): boolean {
   return false;
 }
 
-export function devtoolsMcp(options: DevtoolsMcpOptions = {}): Plugin {
+export function agentDebugMcp(options: AgentDebugMcpOptions = {}): Plugin {
   const wantQuery = options.query !== false;
   const wantRouter = options.router !== false;
   let query = wantQuery;
@@ -89,4 +89,7 @@ export function devtoolsMcp(options: DevtoolsMcpOptions = {}): Plugin {
   };
 }
 
-export default devtoolsMcp;
+/** @deprecated Renamed to `agentDebugMcp` (matches the package name); this alias will be removed. */
+export const devtoolsMcp = agentDebugMcp;
+
+export default agentDebugMcp;
