@@ -13,7 +13,7 @@ pnpm exec tsx scripts/debug-extension.mts               # print SW/page console 
 pnpm exec tsx scripts/dogfood-cookieyes.mts <url>       # run the tools against any localhost React app
 ```
 
-Specs are grouped by delivery slice (`slice1` skeleton … `slice6` WebMCP/3p) plus `browser-tools.spec.ts` (the embedded
+Specs are grouped by delivery slice (`slice1` skeleton … `slice6` 3p exposure) plus `browser-tools.spec.ts` (the embedded
 Playwright MCP `page_*` tools through the relay's own MCP endpoint, including eviction by / recovery from an
 external CDP client), `cdp.spec.ts` (a second Playwright
 client driving the attached tabs through the relay's CDP endpoint), `doctor.spec.ts` (`init` + `doctor` end to end),

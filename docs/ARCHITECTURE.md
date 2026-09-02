@@ -12,8 +12,7 @@ and let it act (override values, invalidate queries, navigate) under an explicit
 ┌──────────────────────── page (MAIN world, document_start) ────────────────────────┐
 │ tools-react        tools-tanstack-query   tools-tanstack-router                    │
 │ (DevTools hook + bippy)  (QueryClient global)   (router global)                    │
-│                        ▼ ToolRegistry: WebMCP ModelContextTool[]                   │
-│   ├─ document.modelContext.registerTool(t, {signal})        (WebMCP, if present)   │
+│                        ▼ ToolRegistry: ToolDefinition[]                            │
 │   ├─ window 'devtoolstooldiscovery' → respondWith({tools})  (chrome-devtools-mcp)  │
 │   └─ MessageChannel port (nonce handshake) ─────────────────────────────────┐      │
 └─────────────────────────────────────────────────────────────────────────────┼──────┘
@@ -29,7 +28,7 @@ and let it act (override values, invalidate queries, navigate) under an explicit
 Runs before the page's JavaScript so the React DevTools hook exists when React loads. Owns the `ToolRegistry`
 (the single definition of every tool for this document), tracks capabilities (`react` when a renderer injects,
 `tanstack_query` / `tanstack_router` when the app sets the globals — polled 250 ms for 30 s), executes tool
-calls with an `AbortController`, and exposes the same registry to WebMCP and to chrome-devtools-mcp's
+calls with an `AbortController`, and exposes the same registry to chrome-devtools-mcp's
 `devtoolstooldiscovery` event.
 
 It also owns the document's `ErrorLog`: console.error/warn and window error/unhandledrejection hooks are installed
@@ -87,7 +86,7 @@ relay, gray otherwise. Settings live in `chrome.storage.local`, session identity
 
 | Decision | Why |
 |---|---|
-| WebMCP is the *tool shape*, not the transport | Chrome ships WebMCP behind an origin trial until ~M157; extensions can only read a page's tools with a testing flag. The relay works on stable Chrome today; WebMCP/3p exposure come for free. |
+| The relay is the only transport | WebMCP is still an origin-trial experiment with a moving API surface (`document.modelContext` → `navigator.modelContext`), so the extension no longer registers page tools into it; the MCP-shaped `ToolDefinition` keeps them portable if that changes. |
 | Fixed tool list, optional `tab` argument, no server-side default tab | MCP 2026-07 is stateless; Claude Code rate-limits `list_changed`. Pure resolution (explicit → sole tab → `AMBIGUOUS_TAB` with candidates) gives single-tab convenience without state. |
 | Fiber-centric React access via bippy | React DevTools' `RendererInterface` ids require replaying the `operations` stream; flushing it in adopt mode corrupts the official panel. Fibers + `renderer.override*` work identically whether the hook is adopted or installed. |
 | No home-grown automation tools; embed Playwright MCP over our own CDP endpoint | Playwright already does browser automation well. The relay exposes the attached tabs over CDP (via the extension's `chrome.debugger`, no `--remote-debugging-port`) and runs `@playwright/mcp` in-process against that endpoint, re-exporting its tools as `page_*` — one server for agents, no name clash with a separately installed Playwright MCP, and the endpoint stays open to external CDP clients. Re-implementing a subset ourselves would be worse at both. |

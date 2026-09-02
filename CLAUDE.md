@@ -45,7 +45,7 @@ The e2e suite loads `packages/extension/.output/chrome-mv3` — rebuild the exte
 
 ## Core conventions (do not break these)
 
-1. **A tool is defined once**, in a `tools-*` package, in the WebMCP `ModelContextTool` shape
+1. **A tool is defined once**, in a `tools-*` package, in the MCP tool shape
    (`name, title, description, inputSchema (JSON Schema), annotations, execute(input, {signal, progress})`) plus
    `capability` and `mutation`. Metadata lives in that package's `src/descriptors.ts` with **no DOM/React
    imports** — the relay imports `@devtools-mcp/<pkg>/descriptors` in Node. Executors live in `src/tools/*`.

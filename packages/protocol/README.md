@@ -3,7 +3,7 @@
 Shared contract between the extension and the relay (and any future host):
 
 - `frame.ts` — zod `Frame` union for every hop, `TabInfo`, handshake messages, `DEFAULTS` (ports, timeouts).
-- `tool.ts` — `ToolDefinition` (WebMCP `ModelContextTool` shape + `capability`, `mutation`, `timeoutMs`),
+- `tool.ts` — `ToolDefinition` (MCP tool shape + `capability`, `mutation`, `timeoutMs`),
   `ToolDescriptor` (serialisable), `hashSchema`, `defineTool`.
 - `encode.ts` — tagged JSON encoding with budgets, `expandPaths`, `decode`, `preview`, `defaultDomSelector`.
 - `cursor.ts` — opaque base64url cursors `{ doc, kind, gen, pos }` and the `Page<T>` shape.

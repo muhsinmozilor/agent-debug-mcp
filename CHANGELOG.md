@@ -12,6 +12,9 @@ Internal cleanup; small agent-facing polish.
   New: `agent-debug-mcp stop` (stops the daemon; also the fix for the `pnpm test:e2e` port-9333 conflict) and
   `--no-daemon` (restores in-process stdio serving; `--no-http` implies it).
 
+- **WebMCP exposure removed.** The extension no longer registers tools into `document.modelContext` — Chrome’s
+  WebMCP is still an origin-trial experiment and its API surface moved (`navigator.modelContext`). The
+  `devtoolstooldiscovery` (chrome-devtools-mcp third-party tools) exposure stays.
 - One `capabilityHint` (now in `@devtools-mcp/protocol`) shared by the page registry and the relay — the
   missing-capability hint no longer differs depending on which side reports it.
 - Shared `budgetSchema`/`pathSchema` JSON-Schema fragments in protocol; the TanStack Query/Router `budget`

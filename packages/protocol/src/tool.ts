@@ -7,7 +7,7 @@ export const CapabilitySchema = z.enum(CAPABILITIES);
 /** JSON Schema (draft 2020-12 subset) used for tool input schemas. Kept loose on purpose. */
 export type JsonSchema = Record<string, unknown>;
 
-/** WebMCP `ToolAnnotations` plus MCP's `openWorldHint`. */
+/** MCP-style tool annotations. */
 export interface ToolAnnotations {
   readOnlyHint?: boolean;
   untrustedContentHint?: boolean;
@@ -23,7 +23,7 @@ export interface ToolExecuteOptions {
 }
 
 /**
- * The single source of truth for a tool. Shape follows the WebMCP `ModelContextTool` dictionary
+ * The single source of truth for a tool. Shape follows the MCP tool contract
  * (`name`, `title`, `description`, `inputSchema`, `execute`, `annotations`) plus Agent Debug MCP metadata
  * that the relay uses for routing and gating.
  */

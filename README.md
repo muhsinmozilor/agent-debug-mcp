@@ -202,8 +202,7 @@ browser tools); `--no-playwright` disables just the built-in tools.
 
 ## Without the relay
 
-The same tools are also registered into `document.modelContext` when Chrome's WebMCP is enabled
-(`--enable-features=WebMCP`), and announced to `chrome-devtools-mcp` via its third-party tool discovery
+The same tools are also announced to `chrome-devtools-mcp` via its third-party tool discovery
 (`--categoryExperimentalThirdParty`).
 
 ## Development
