@@ -23,7 +23,7 @@ export type { InitOptions, InitResult, McpConfigFile } from './init.js';
 export { ensureRelayDaemon, stopRelayDaemon, fetchRelayHealth, readDaemonInfo, daemonPidFile, daemonLogFile } from './daemon.js';
 export type { EnsureDaemonOptions, EnsureDaemonResult, StopDaemonResult, DaemonInfo, RelayHealth } from './daemon.js';
 
-export const RELAY_VERSION = '0.2.0';
+export const RELAY_VERSION = '0.3.0';
 
 export interface RelayOptions {
   host?: string;
