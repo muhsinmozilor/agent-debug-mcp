@@ -44,3 +44,36 @@ poller wrapping protocol's `watchGlobal`, `descriptors.ts`, `tools.ts`, tests). 
 
 TypeScript strict, ESM, no default exports except WXT entrypoints. Errors are `DevtoolsError` with a hint.
 Keep page-side code free of `chrome.*` (MAIN world has none) and keep `descriptors.ts` free of DOM imports.
+
+## Releasing (maintainers)
+
+`scripts/release.sh` (maintainer-local; `scripts/` is git-ignored) runs the whole release from a clean `main`:
+
+```bash
+bash scripts/release.sh [patch|minor|major|x.y.z] [--dry-run] [--github]
+```
+
+It bumps `agent-debug-mcp` and the extension in lockstep, builds and zips the extension into `releases/`,
+points the npm README's download link at the new zip, publishes to npm, then commits and tags `vX.Y.Z`.
+
+The last step is the **GitHub Release** — it is what makes the README's
+[releases/latest](https://github.com/muhsinmozilor/agent-debug-mcp/releases/latest) download link work, so
+publish one for every version. Three ways:
+
+- **`--github`** — the script does it: pushes the branch and tag, then `gh release create` with the zip
+  attached and auto-generated notes. Needs the [GitHub CLI](https://cli.github.com) once:
+  `brew install gh && gh auth login`.
+- **Manually with `gh`** (also for a past tag that has no release yet):
+
+  ```bash
+  git push origin main vX.Y.Z    # --follow-tags misses the repo's older lightweight tags
+  gh release create vX.Y.Z releases/agent-debug-mcp-X.Y.Z-chrome.zip --title vX.Y.Z --generate-notes
+  ```
+
+- **Web UI** — repo → **Releases** → **Draft a new release** → *Choose a tag* → pick `vX.Y.Z` →
+  *Generate release notes* → drag `releases/agent-debug-mcp-X.Y.Z-chrome.zip` into the assets box →
+  **Publish release**.
+
+A published release's asset URL is stable
+(`https://github.com/muhsinmozilor/agent-debug-mcp/releases/download/vX.Y.Z/agent-debug-mcp-X.Y.Z-chrome.zip`),
+unlike the raw `releases/` link on `main`, which only ever serves the newest zip.

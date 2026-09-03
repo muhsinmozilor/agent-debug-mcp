@@ -1,5 +1,8 @@
 # Agent Debug MCP
 
+[![npm](https://img.shields.io/npm/v/agent-debug-mcp)](https://www.npmjs.com/package/agent-debug-mcp)
+[![GitHub release](https://img.shields.io/github/v/release/muhsinmozilor/agent-debug-mcp)](https://github.com/muhsinmozilor/agent-debug-mcp/releases/latest)
+
 Expose the **React DevTools** and **TanStack Query / Router** state of the app running in your Chrome tab
 to coding agents (Claude Code, Cursor, Codex, any MCP client) as MCP tools.
 
@@ -7,8 +10,8 @@ to coding agents (Claude Code, Cursor, Codex, any MCP client) as MCP tools.
 Chrome tab (your React app) ──► Agent Debug MCP extension ──► local relay (127.0.0.1:9333) ──► agent (stdio or /mcp)
 ```
 
-Two parts: a Chrome MV3 extension that reads the page, and `agent-debug-mcp`, a local MCP server the
-extension connects to.
+Two parts: a Chrome MV3 extension that reads the page, and [`agent-debug-mcp`](https://www.npmjs.com/package/agent-debug-mcp), a local MCP server the
+extension connects to (published on npm).
 
 ## What the agent can do
 
@@ -64,14 +67,19 @@ tabs — see [Browser automation](#browser-automation).
 
 ## Setup
 
-**1. Build and load the extension**
+**1. Load the extension**
+
+Download `agent-debug-mcp-<version>-chrome.zip` from the
+[latest GitHub release](https://github.com/muhsinmozilor/agent-debug-mcp/releases/latest) and unzip it — or build
+from source:
 
 ```bash
 pnpm install
 pnpm --filter @devtools-mcp/extension build     # → packages/extension/.output/chrome-mv3
 ```
 
-Chrome → `chrome://extensions` → Developer mode → **Load unpacked** → `packages/extension/.output/chrome-mv3`.
+Chrome → `chrome://extensions` → Developer mode → **Load unpacked** → the unzipped folder (or
+`packages/extension/.output/chrome-mv3` when building from source).
 
 **2. Wire up your agent — one command**
 
