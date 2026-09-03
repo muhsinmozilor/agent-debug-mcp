@@ -3,7 +3,7 @@
  * `window.__TANSTACK_QUERY_CLIENT__ = queryClient` (the convention used by the community devtools
  * extension). We poll briefly after load and re-check lazily on each tool call.
  */
-import { DevtoolsError, watchGlobal } from '@devtools-mcp/protocol';
+import { AgentDebugError, watchGlobal } from '@devtools-mcp/protocol';
 
 /** Structural (duck-typed) view of the parts of QueryClient we use, so the page's own instance works regardless of version. */
 export interface QueryLike {
@@ -51,7 +51,7 @@ export function findQueryClient(target: typeof globalThis = globalThis): QueryCl
 export function requireQueryClient(target: typeof globalThis = globalThis): QueryClientLike {
   const c = findQueryClient(target);
   if (!c) {
-    throw new DevtoolsError('CAPABILITY_UNAVAILABLE', 'No TanStack QueryClient found on window.__TANSTACK_QUERY_CLIENT__', {
+    throw new AgentDebugError('CAPABILITY_UNAVAILABLE', 'No TanStack QueryClient found on window.__TANSTACK_QUERY_CLIENT__', {
       hint: 'In the app entry add: `if (import.meta.env.DEV) window.__TANSTACK_QUERY_CLIENT__ = queryClient`.',
       data: { capability: 'tanstack_query' },
     });

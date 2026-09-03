@@ -80,34 +80,34 @@ Playwright MCP; parameters are documented upstream). Playwright's `browser_snaps
 ## Page / tabs (capability `page`)
 
 ### `page_snapshot` — read-only
-Compact accessibility-style outline of the page: one line per meaningful element (landmarks, headings, links, buttons, inputs, lists, paragraphs, anything with data-testid) with role, name, state attributes, a CSS selector and the React component that rendered it (`→ Name#elementId`, printed where it changes). One call gives both an actionable target (selector for Playwright / react_find_by_dom) and the component to inspect (elementId for react_inspect_element / react_explain). Hidden elements are skipped. Prefer this over react_get_tree to orient on what the user sees.
+Compact accessibility-style outline of the page: one line per meaningful element with role, name, state, a CSS selector and the owning React component (`→ Name#elementId`). One call gives both an automation target (selector) and the component to inspect (elementId). Prefer this over react_get_tree to orient on what the user sees.
 
 | Param | Type | Description |
 |---|---|---|
 | `selector` | string | Root element to outline (default body). |
 | `maxNodes` | integer |  (default `200`) |
-| `interactiveOnly` | boolean | Only links, buttons, inputs and other focusable controls. (default `false`) |
-| `format` | `text` \| `json` | `text` = indented outline (fewest tokens); `json` = structured nodes. (default `"text"`) |
+| `interactiveOnly` | boolean | Only focusable controls. (default `false`) |
+| `format` | `text` \| `json` | `text` = indented outline (fewest tokens). (default `"text"`) |
 
 ### `page_get_errors` — read-only
-Runtime problems recorded in this document since it loaded: uncaught exceptions, unhandled promise rejections, console.error (React error-boundary catches and React warnings are tagged `react`, with the component stack), failed TanStack queries/mutations and router match errors. Use it as the verification step after a change or an action: pass the `latestSeq` from the previous call as `since` to get only what happened in between. Consecutive duplicates are collapsed with a `count`. Buffer holds the last 200 entries per document.
+Runtime problems recorded since the document loaded: uncaught exceptions, unhandled rejections, console.error (React ones tagged `react` with the component stack), failed TanStack queries/mutations and router match errors. Use as the verification step after a change or action: pass the previous call's `latestSeq` as `since` to get only what happened in between.
 
 | Param | Type | Description |
 |---|---|---|
-| `since` | integer | Return only entries with seq greater than this (use latestSeq from the previous call). |
-| `kinds` | array<string> | Restrict to these kinds. Default: everything except console.warn. |
-| `includeWarnings` | boolean | Include console.warn entries when `kinds` is not given. (default `false`) |
-| `limit` | integer | Most recent N matching entries. (default `50`) |
+| `since` | integer | Only entries with seq greater than this (latestSeq from the previous call). |
+| `kinds` | array<string> | Default: everything except console.warn. |
+| `includeWarnings` | boolean | Include console.warn when `kinds` is not given. (default `false`) |
+| `limit` | integer |  (default `50`) |
 
 ### `page_highlight`
-Draw a temporary highlight overlay around a component (by `elementId`) or DOM elements (by CSS `selector`) so the user can see what you are referring to. Purely visual; does not modify the app.
+Draw a temporary highlight overlay around a component (`elementId`) or DOM elements (`selector`) to show the user what you mean. Purely visual.
 
 | Param | Type | Description |
 |---|---|---|
 | `elementId` | integer | Component id from react_get_tree / react_search_components / react_find_by_dom. |
 | `selector` | string | CSS selector (alternative to elementId). |
 | `durationMs` | integer |  (default `3000`) |
-| `label` | string | Optional caption shown with the highlight. |
+| `label` | string | Caption shown with the highlight. |
 
 ### `page_element_at_point` — read-only
 Return the DOM element at viewport coordinates (x, y) and the React component that rendered it, with ancestors.
@@ -118,7 +118,7 @@ Return the DOM element at viewport coordinates (x, y) and the React component th
 | `y` * | number |  |
 
 ### `page_pick_element`
-Enter a pick mode on the page: elements highlight on hover and the next click is captured (not delivered to the app). Returns the clicked DOM element and its React component. Blocks until the user clicks, presses Escape, or `timeoutMs` elapses.
+Pick mode: elements highlight on hover; the next click is captured (not delivered to the app) and returned as DOM element + React component. Blocks until the user clicks, presses Escape, or `timeoutMs` elapses.
 
 | Param | Type | Description |
 |---|---|---|
@@ -129,11 +129,11 @@ _Relay timeout: 305 s._
 ## React (capability `react`)
 
 ### `react_explain` — read-only
-One-call summary of the component behind a DOM element or elementId: props, hooks, contexts, owners and ancestors, the DOM nodes it renders, and its source location (symbolicated through source maps when available). Equivalent to react_find_by_dom + react_inspect_element + react_get_dom_nodes + react_get_source. Start here when asked "why does this element look/behave like that"; follow with the profiler or query tools it points to.
+One-call summary of the component behind a CSS selector or elementId: props, hooks, contexts, owners, rendered DOM nodes and symbolicated source location. Equivalent to react_find_by_dom + react_inspect_element + react_get_dom_nodes + react_get_source. Start here for "why does this element look/behave like that".
 
 | Param | Type | Description |
 |---|---|---|
-| `selector` | string | CSS selector of a rendered element (from page_snapshot or a Playwright locator). |
+| `selector` | string | CSS selector of a rendered element (e.g. from page_snapshot). |
 | `nth` | integer | Which selector match to use. (default `0`) |
 | `elementId` | integer | Component id from react_get_tree / react_search_components / react_find_by_dom. |
 | `expand` | array<array> | Paths (relative to {props,state,hooks,context}) to expand in full. |
@@ -141,41 +141,41 @@ One-call summary of the component behind a DOM element or elementId: props, hook
 _Relay timeout: 30 s._
 
 ### `react_get_renderers` — read-only
-List React renderers registered on the tab: React version, build type (development/production), number of roots, how the DevTools hook was obtained (adopted from the official React DevTools extension, or installed by Agent Debug MCP), and which capabilities (props/state override, profiling) the renderer supports. Call this first if other react_* tools fail.
+List React renderers on the tab: version, build type (development/production), root count, how the DevTools hook was obtained, and supported capabilities (override, profiling). Call this first if other react_* tools fail.
 
 _No parameters._
 
 ### `react_get_tree` — read-only
-Return the mounted React component tree as a paginated pre-order list. Each node has an `id` (stable while the component stays mounted; use it with react_inspect_element and friends), `name`, `kind`, `key`, `depth`, `parentId` and `childCount`. Host elements (div, span…) and wrapper nodes (Fragment, StrictMode…) are hidden by default. Apps using routers/providers nest deeply — raise `maxDepth` (default 6) or start from a `rootId`. Use `filter.nameRegex` to focus and `cursor` to fetch the next page.
+Mounted React component tree as a paginated pre-order list: id (stable while mounted; used by react_inspect_element and friends), name, kind, key, depth, parentId, childCount. Host elements and wrappers are hidden by default. Deeply nested apps need a higher `maxDepth` (default 6) or a `rootId` start.
 
 | Param | Type | Description |
 |---|---|---|
-| `rootId` | integer | Element id to use as the subtree root (default: all React roots). |
-| `maxDepth` | integer | Max depth below the root(s). (default `6`) |
-| `maxNodes` | integer | Page size. (default `200`) |
-| `cursor` | string | Opaque cursor from a previous page. |
+| `rootId` | integer | Subtree root element id (default: all React roots). |
+| `maxDepth` | integer |  (default `6`) |
+| `maxNodes` | integer |  (default `200`) |
+| `cursor` | string |  |
 | `filter` | object |  |
 
 ### `react_inspect_element` — read-only
-Inspect one mounted component: props, state (class components), hooks (name, current value, editable?), consumed contexts, owner chain, source location (unsymbolicated; use react_get_source for file:line) and the DOM nodes it renders. Values deeper than the budget are collapsed to `{ "$": "object", "path": [...] }` stubs — pass those paths in `expand` to drill in without re-fetching everything. Non-JSON values are tagged (`{"$":"date"}`, `{"$":"fn"}`, `{"$":"map"}`…).
+Inspect one mounted component: props, class state, hooks (name, value, editable?), contexts, owner chain, raw source location (react_get_source symbolicates) and rendered DOM nodes. Values beyond the budget collapse to `{ "$": "object", "path": [...] }` stubs — pass those paths in `expand` to drill in. Non-JSON values are tagged (`{"$":"date"}`, `{"$":"fn"}`…).
 
 | Param | Type | Description |
 |---|---|---|
 | `elementId` * | integer | Component id from react_get_tree / react_search_components / react_find_by_dom. |
 | `expand` | array<array> | Paths (relative to {props,state,hooks,context}) to expand. |
-| `budget` | object | Override the serialisation budget for this call. |
+| `budget` | object | Serialisation budget overrides: depth (default 2), maxKeys (50), maxString (200), maxBytes (32768). |
 
 ### `react_search_components` — read-only
-Find mounted components by display-name regex and/or a substring that must appear in their props (matched against a compact preview of the props). Returns ids, names, depth and the ancestor chain so you can orient without dumping the tree.
+Find mounted components by display-name regex and/or a substring of their props preview. Returns ids, names, depth and ancestor chain.
 
 | Param | Type | Description |
 |---|---|---|
-| `nameRegex` | string | Case-insensitive regex on the component display name. |
-| `propsContains` | string | Substring that must appear in the props preview (e.g. a label or id value). |
+| `nameRegex` | string | Case-insensitive regex on the display name. |
+| `propsContains` | string | Substring that must appear in the props preview. |
 | `limit` | integer |  (default `25`) |
 
 ### `react_find_by_dom` — read-only
-Resolve a CSS selector to the React component(s) that rendered the matching DOM element(s): nearest composite component id/name plus its ancestor chain. Use `nth` to pick one match; otherwise up to 10 matches are returned.
+Resolve a CSS selector to the React component(s) that rendered it: nearest composite component id/name plus ancestors. Up to 10 matches unless `nth` picks one.
 
 | Param | Type | Description |
 |---|---|---|
@@ -190,7 +190,7 @@ List the host DOM nodes a component renders (tag, unique CSS selector, bounding 
 | `elementId` * | integer | Component id from react_get_tree / react_search_components / react_find_by_dom. |
 
 ### `react_get_source` — read-only
-Resolve where a component is defined and where its JSX was created: file, line, column and function name, symbolicated through source maps when the dev server serves them (React 19 has no _debugSource; this uses the owner stack). Also returns the raw (bundle) frame and the owner stack.
+Where a component is defined and where its JSX was created: file, line, column, function name — symbolicated through source maps when the dev server serves them. Also returns the raw bundle frame and the owner stack.
 
 | Param | Type | Description |
 |---|---|---|
@@ -199,7 +199,7 @@ Resolve where a component is defined and where its JSX was created: file, line, 
 _Relay timeout: 30 s._
 
 ### `react_override_value` — mutation
-Set a value inside a mounted component and re-render it, like editing in React DevTools. `kind` selects the store: "props" (path into props), "hooks" (path starts with the hook index from react_inspect_element, then into its state — only useState/useReducer are editable), "state" (class component state). `value` accepts plain JSON or tagged values ({"$":"date","iso":…}, {"$":"undefined"}, {"$":"map",…}). Requires a development React build and the per-origin mutation toggle.
+Set a value inside a mounted component and re-render it, like editing in React DevTools. `kind`: "props", "hooks" (path starts with the hook index from react_inspect_element; only useState/useReducer are editable) or "state" (class components). `value` accepts JSON or tagged values ({"$":"date","iso":…}, {"$":"undefined"}…). Requires a dev React build and the per-origin mutation toggle.
 
 | Param | Type | Description |
 |---|---|---|
@@ -209,55 +209,55 @@ Set a value inside a mounted component and re-render it, like editing in React D
 | `value` * | any | New value (JSON or tagged). |
 
 ### `react_force_rerender` — mutation
-Schedule an update on a component (and thus its subtree) without changing props or state. Useful to observe render behaviour with react_watch_renders.
+Schedule an update on a component subtree without changing props or state (e.g. to observe with react_watch_renders).
 
 | Param | Type | Description |
 |---|---|---|
 | `elementId` * | integer | Component id from react_get_tree / react_search_components / react_find_by_dom. |
 
 ### `react_profile_start`
-Start recording React commits. Each commit records which components rendered, their self render time (dev builds), and WHY: changed prop keys, changed hook indices, class state, context, first mount, or "parent" (re-rendered only because a parent did). Interact with the app, then call react_profile_stop for a summary and react_profile_get_commits for details.
+Start recording React commits: which components rendered, self render time (dev builds), and WHY — changed prop keys, changed hook indices, class state, context, first mount, or "parent" (only because a parent did). Interact, then react_profile_stop for a summary and react_profile_get_commits for details.
 
 | Param | Type | Description |
 |---|---|---|
 | `recordChangeDescriptions` | boolean |  (default `true`) |
 
 ### `react_profile_stop`
-Stop the current profiling session and return a summary: commit count, total duration, render-cause histogram, hottest components (by self time) and most-rendered components with the props that changed most often. Data stays available for react_profile_get_commits unless keepData=false.
+Stop profiling and summarise: commit count, total duration, render-cause histogram, hottest and most-rendered components with their most-changed props. Data stays available for react_profile_get_commits unless keepData=false.
 
 | Param | Type | Description |
 |---|---|---|
 | `keepData` | boolean |  (default `true`) |
 
 ### `react_profile_get_commits` — read-only
-Page through the commits of the last profile: timestamp, duration, and per-component render records (id, name, phase, causes, changedProps, changedHooks, selfDurationMs). Filter by `minDurationMs` or a `component` name regex.
+Page through the commits of the last profile: timestamp, duration, per-component render records (id, name, phase, causes, changedProps, changedHooks, selfDurationMs).
 
 | Param | Type | Description |
 |---|---|---|
 | `cursor` | string |  |
 | `limit` | integer |  (default `20`) |
 | `minDurationMs` | number |  |
-| `component` | string | Only commits (and renders) matching this component-name regex. |
+| `component` | string | Component-name regex filter. |
 
 ### `react_watch_renders` — read-only
-Block for `durationMs` (default 10 s) while recording commits, streaming progress, then return a digest: render-cause histogram, most-rendered/hottest components and a compact timeline like `Counter(props)`, `App(hooks)`, `Themed(context)`, `List(parent)`. Use it to catch unnecessary re-renders while you (or the user) interact with the page. Cancel any time.
+Block for `durationMs` (default 10 s) recording commits while you or the user interact, then return a digest: render-cause histogram, hottest components and a compact timeline like `Counter(props)`, `List(parent)`. Catches unnecessary re-renders. Cancel any time.
 
 | Param | Type | Description |
 |---|---|---|
 | `durationMs` | integer |  (default `10000`) |
 | `filter` | object |  |
-| `maxEvents` | integer | Stop early after this many component renders. (default `500`) |
+| `maxEvents` | integer | Stop early after this many renders. (default `500`) |
 
 _Relay timeout: 310 s._
 
 ## TanStack Query (capability `tanstack_query`)
 
 ### `tanstack_query_list_queries` — read-only
-List queries in the TanStack Query cache with a compact summary each: queryKey, queryHash, status (pending/error/success), fetchStatus (fetching/paused/idle), isStale, isInvalidated, observer count, dataUpdatedAt, error and a short data preview. Filter by `queryKeyPrefix` (array prefix match), `status`, or `stale`. Paginate with `cursor`. Use tanstack_query_get_query for full data.
+List queries in the TanStack Query cache with a compact summary each: queryKey, queryHash, status, fetchStatus, isStale, isInvalidated, observer count, dataUpdatedAt, error and a short data preview. Use tanstack_query_get_query for full data.
 
 | Param | Type | Description |
 |---|---|---|
-| `queryKeyPrefix` | array | Only queries whose key starts with this prefix, e.g. ["users"]. |
+| `queryKeyPrefix` | array | Array prefix match, e.g. ["users"]. |
 | `status` | `pending` \| `error` \| `success` \| `loading` |  |
 | `fetchStatus` | `fetching` \| `paused` \| `idle` |  |
 | `stale` | boolean | true = only stale queries; false = only fresh. |
@@ -266,17 +266,17 @@ List queries in the TanStack Query cache with a compact summary each: queryKey, 
 | `cursor` | string |  |
 
 ### `tanstack_query_get_query` — read-only
-Full detail of one query by `queryHash` (preferred, from list_queries) or exact `queryKey`: state (data, error, dataUpdatedAt, fetch counts…), options (staleTime, gcTime, enabled, retry, meta…), observers, and whether it is stale/active. Cached data is returned collapsed beyond the budget — pass `expand` paths (relative to {state, options, data}) to drill in.
+Full detail of one query by `queryHash` (preferred, from list_queries) or exact `queryKey`: state, options (staleTime, gcTime, enabled…), observers, staleness. Data collapses beyond the budget — `expand` paths (relative to {state, options, data}) drill in.
 
 | Param | Type | Description |
 |---|---|---|
 | `queryHash` | string |  |
 | `queryKey` | array | Query key array, e.g. ["users", {"page": 1}]. |
 | `expand` | array<array> |  |
-| `budget` | object | Override the serialisation budget for this call. |
+| `budget` | object | Serialisation budget overrides: depth (default 2), maxKeys (50), maxString (200), maxBytes (32768). |
 
 ### `tanstack_query_list_mutations` — read-only
-List mutations in the MutationCache: mutationId, mutationKey, status (idle/pending/success/error), submittedAt, failureCount, isPaused and a variables preview.
+List mutations in the MutationCache: mutationId, mutationKey, status, submittedAt, failureCount, isPaused and a variables preview.
 
 | Param | Type | Description |
 |---|---|---|
@@ -291,7 +291,7 @@ Full detail of one mutation by `mutationId`: state (variables, data, error, cont
 |---|---|---|
 | `mutationId` * | integer |  |
 | `expand` | array<array> |  |
-| `budget` | object | Override the serialisation budget for this call. |
+| `budget` | object | Serialisation budget overrides: depth (default 2), maxKeys (50), maxString (200), maxBytes (32768). |
 
 ### `tanstack_query_invalidate` — mutation
 Mark matching queries stale (`queryClient.invalidateQueries`) and refetch the active ones (`refetchType`, default "active"). Returns the affected query hashes.
@@ -340,12 +340,12 @@ mode "remove": drop matching queries from the cache (`removeQueries`). mode "res
 ## TanStack Router (capability `tanstack_router`)
 
 ### `tanstack_router_get_state` — read-only
-Current TanStack Router state: status (idle/pending), isLoading, location (pathname, search, hash, href), resolvedLocation, and the active matches (routeId, pathname, params, search, status, isFetching, error, whether loaderData is present). Use tanstack_router_get_match for loaderData/context of one match. `expand` paths are relative to {location, matches}.
+Current TanStack Router state: status, isLoading, location, resolvedLocation and the active matches (routeId, params, search, status, error…). Use tanstack_router_get_match for loaderData/context of one match. `expand` paths are relative to {location, matches}.
 
 | Param | Type | Description |
 |---|---|---|
 | `expand` | array<array> |  |
-| `budget` | object | Override the serialisation budget for this call. |
+| `budget` | object | Serialisation budget overrides: depth (default 2), maxKeys (50), maxString (200), maxBytes (32768). |
 
 ### `tanstack_router_list_routes` — read-only
 Flat list of the route tree: routeId, path, fullPath, parentId, isRoot, and which options are defined (loader, beforeLoad, validateSearch, component, lazy).
@@ -363,7 +363,7 @@ Detail of one active match by `matchId` or `routeId`: params, search, loaderData
 | `matchId` | string |  |
 | `routeId` | string |  |
 | `expand` | array<array> |  |
-| `budget` | object | Override the serialisation budget for this call. |
+| `budget` | object | Serialisation budget overrides: depth (default 2), maxKeys (50), maxString (200), maxBytes (32768). |
 
 ### `tanstack_router_navigate` — mutation
 Call `router.navigate({ to, params, search, hash, replace })` and wait (up to `waitMs`) for the router to settle (status idle). Returns the resulting location and matches.

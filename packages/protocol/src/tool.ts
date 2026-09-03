@@ -111,12 +111,12 @@ export type ToolMeta = Omit<ToolDefinition, 'execute'> & { title: string };
 /** Shared JSON Schema fragment for the per-call serialisation `budget` input. */
 export const budgetSchema: JsonSchema = {
   type: 'object',
-  description: 'Override the serialisation budget for this call.',
+  description: 'Serialisation budget overrides: depth (default 2), maxKeys (50), maxString (200), maxBytes (32768).',
   properties: {
-    depth: { type: 'integer', minimum: 0, maximum: 8, description: 'Nesting depth before collapsing (default 2)' },
-    maxKeys: { type: 'integer', minimum: 1, maximum: 500, description: 'Max keys/items per object (default 50)' },
-    maxString: { type: 'integer', minimum: 16, maximum: 20000, description: 'Max string length (default 200)' },
-    maxBytes: { type: 'integer', minimum: 1024, maximum: 8388608, description: 'Approximate byte budget (default 32768)' },
+    depth: { type: 'integer', minimum: 0, maximum: 8 },
+    maxKeys: { type: 'integer', minimum: 1, maximum: 500 },
+    maxString: { type: 'integer', minimum: 16, maximum: 20000 },
+    maxBytes: { type: 'integer', minimum: 1024, maximum: 8388608 },
   },
   additionalProperties: false,
 };

@@ -15,9 +15,8 @@ export const reactGetRenderersMeta: ToolMeta = {
   name: 'react_get_renderers',
   title: 'React renderers',
   description:
-    'List React renderers registered on the tab: React version, build type (development/production), number of roots, ' +
-    'how the DevTools hook was obtained (adopted from the official React DevTools extension, or installed by Agent Debug MCP), ' +
-    'and which capabilities (props/state override, profiling) the renderer supports. Call this first if other react_* tools fail.',
+    'List React renderers on the tab: version, build type (development/production), root count, how the DevTools hook ' +
+    'was obtained, and supported capabilities (override, profiling). Call this first if other react_* tools fail.',
   inputSchema: { type: 'object', properties: {}, additionalProperties: false },
   annotations: RO,
   capability: 'react',
@@ -28,24 +27,22 @@ export const reactGetTreeMeta: ToolMeta = {
   name: 'react_get_tree',
   title: 'React component tree',
   description:
-    'Return the mounted React component tree as a paginated pre-order list. Each node has an `id` (stable while the ' +
-    'component stays mounted; use it with react_inspect_element and friends), `name`, `kind`, `key`, `depth`, ' +
-    '`parentId` and `childCount`. Host elements (div, span…) and wrapper nodes (Fragment, StrictMode…) are hidden by ' +
-    'default. Apps using routers/providers nest deeply — raise `maxDepth` (default 6) or start from a `rootId`. ' +
-    'Use `filter.nameRegex` to focus and `cursor` to fetch the next page.',
+    'Mounted React component tree as a paginated pre-order list: id (stable while mounted; used by react_inspect_element ' +
+    'and friends), name, kind, key, depth, parentId, childCount. Host elements and wrappers are hidden by default. ' +
+    'Deeply nested apps need a higher `maxDepth` (default 6) or a `rootId` start.',
   inputSchema: {
     type: 'object',
     properties: {
-      rootId: { type: 'integer', description: 'Element id to use as the subtree root (default: all React roots).' },
-      maxDepth: { type: 'integer', minimum: 0, maximum: 64, default: 6, description: 'Max depth below the root(s).' },
-      maxNodes: { type: 'integer', minimum: 1, maximum: 2000, default: 200, description: 'Page size.' },
-      cursor: { type: 'string', description: 'Opaque cursor from a previous page.' },
+      rootId: { type: 'integer', description: 'Subtree root element id (default: all React roots).' },
+      maxDepth: { type: 'integer', minimum: 0, maximum: 64, default: 6 },
+      maxNodes: { type: 'integer', minimum: 1, maximum: 2000, default: 200 },
+      cursor: { type: 'string' },
       filter: {
         type: 'object',
         properties: {
-          nameRegex: { type: 'string', description: 'Only include components whose display name matches (case-insensitive). Ancestors are still shown for context.' },
-          hideHost: { type: 'boolean', default: true, description: 'Hide DOM host elements.' },
-          hideWrappers: { type: 'boolean', default: true, description: 'Hide Fragment/StrictMode/Profiler/Offscreen wrappers.' },
+          nameRegex: { type: 'string', description: 'Only components whose display name matches (case-insensitive); ancestors kept for context.' },
+          hideHost: { type: 'boolean', default: true },
+          hideWrappers: { type: 'boolean', default: true },
         },
         additionalProperties: false,
       },
@@ -61,10 +58,9 @@ export const reactInspectElementMeta: ToolMeta = {
   name: 'react_inspect_element',
   title: 'Inspect a React component',
   description:
-    'Inspect one mounted component: props, state (class components), hooks (name, current value, editable?), consumed ' +
-    'contexts, owner chain, source location (unsymbolicated; use react_get_source for file:line) and the DOM nodes it ' +
-    'renders. Values deeper than the budget are collapsed to `{ "$": "object", "path": [...] }` stubs — pass those paths in ' +
-    '`expand` to drill in without re-fetching everything. Non-JSON values are tagged (`{"$":"date"}`, `{"$":"fn"}`, `{"$":"map"}`…).',
+    'Inspect one mounted component: props, class state, hooks (name, value, editable?), contexts, owner chain, raw source ' +
+    'location (react_get_source symbolicates) and rendered DOM nodes. Values beyond the budget collapse to ' +
+    '`{ "$": "object", "path": [...] }` stubs — pass those paths in `expand` to drill in. Non-JSON values are tagged (`{"$":"date"}`, `{"$":"fn"}`…).',
   inputSchema: {
     type: 'object',
     properties: {
@@ -84,13 +80,12 @@ export const reactSearchComponentsMeta: ToolMeta = {
   name: 'react_search_components',
   title: 'Search components',
   description:
-    'Find mounted components by display-name regex and/or a substring that must appear in their props (matched against a ' +
-    'compact preview of the props). Returns ids, names, depth and the ancestor chain so you can orient without dumping the tree.',
+    'Find mounted components by display-name regex and/or a substring of their props preview. Returns ids, names, depth and ancestor chain.',
   inputSchema: {
     type: 'object',
     properties: {
-      nameRegex: { type: 'string', description: 'Case-insensitive regex on the component display name.' },
-      propsContains: { type: 'string', description: 'Substring that must appear in the props preview (e.g. a label or id value).' },
+      nameRegex: { type: 'string', description: 'Case-insensitive regex on the display name.' },
+      propsContains: { type: 'string', description: 'Substring that must appear in the props preview.' },
       limit: { type: 'integer', minimum: 1, maximum: 200, default: 25 },
     },
     additionalProperties: false,
@@ -104,8 +99,7 @@ export const reactFindByDomMeta: ToolMeta = {
   name: 'react_find_by_dom',
   title: 'DOM selector → component',
   description:
-    'Resolve a CSS selector to the React component(s) that rendered the matching DOM element(s): nearest composite ' +
-    'component id/name plus its ancestor chain. Use `nth` to pick one match; otherwise up to 10 matches are returned.',
+    'Resolve a CSS selector to the React component(s) that rendered it: nearest composite component id/name plus ancestors. Up to 10 matches unless `nth` picks one.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -134,9 +128,8 @@ export const reactGetSourceMeta: ToolMeta = {
   name: 'react_get_source',
   title: 'Component source location',
   description:
-    'Resolve where a component is defined and where its JSX was created: file, line, column and function name, symbolicated ' +
-    'through source maps when the dev server serves them (React 19 has no _debugSource; this uses the owner stack). Also ' +
-    'returns the raw (bundle) frame and the owner stack.',
+    'Where a component is defined and where its JSX was created: file, line, column, function name — symbolicated through ' +
+    'source maps when the dev server serves them. Also returns the raw bundle frame and the owner stack.',
   inputSchema: { type: 'object', properties: { elementId: elementIdProp }, required: ['elementId'], additionalProperties: false },
   annotations: RO,
   capability: 'react',
@@ -148,15 +141,14 @@ export const pageHighlightMeta: ToolMeta = {
   name: 'page_highlight',
   title: 'Highlight on page',
   description:
-    'Draw a temporary highlight overlay around a component (by `elementId`) or DOM elements (by CSS `selector`) so the ' +
-    'user can see what you are referring to. Purely visual; does not modify the app.',
+    'Draw a temporary highlight overlay around a component (`elementId`) or DOM elements (`selector`) to show the user what you mean. Purely visual.',
   inputSchema: {
     type: 'object',
     properties: {
       elementId: elementIdProp,
       selector: { type: 'string', description: 'CSS selector (alternative to elementId).' },
       durationMs: { type: 'integer', minimum: 100, maximum: 60000, default: 3000 },
-      label: { type: 'string', description: 'Optional caption shown with the highlight.' },
+      label: { type: 'string', description: 'Caption shown with the highlight.' },
     },
     additionalProperties: false,
   },
@@ -184,8 +176,8 @@ export const pagePickElementMeta: ToolMeta = {
   name: 'page_pick_element',
   title: 'Ask the user to click an element',
   description:
-    'Enter a pick mode on the page: elements highlight on hover and the next click is captured (not delivered to the app). ' +
-    'Returns the clicked DOM element and its React component. Blocks until the user clicks, presses Escape, or `timeoutMs` elapses.',
+    'Pick mode: elements highlight on hover; the next click is captured (not delivered to the app) and returned as DOM ' +
+    'element + React component. Blocks until the user clicks, presses Escape, or `timeoutMs` elapses.',
   inputSchema: {
     type: 'object',
     properties: { timeoutMs: { type: 'integer', minimum: 1000, maximum: 300000, default: 60000 } },
@@ -203,10 +195,9 @@ export const reactOverrideValueMeta: ToolMeta = {
   name: 'react_override_value',
   title: 'Override a prop / hook state / class state value',
   description:
-    'Set a value inside a mounted component and re-render it, like editing in React DevTools. `kind` selects the store: ' +
-    '"props" (path into props), "hooks" (path starts with the hook index from react_inspect_element, then into its state — only ' +
-    'useState/useReducer are editable), "state" (class component state). `value` accepts plain JSON or tagged values ' +
-    '({"$":"date","iso":…}, {"$":"undefined"}, {"$":"map",…}). Requires a development React build and the per-origin mutation toggle.',
+    'Set a value inside a mounted component and re-render it, like editing in React DevTools. `kind`: "props", "hooks" ' +
+    '(path starts with the hook index from react_inspect_element; only useState/useReducer are editable) or "state" (class components). ' +
+    '`value` accepts JSON or tagged values ({"$":"date","iso":…}, {"$":"undefined"}…). Requires a dev React build and the per-origin mutation toggle.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -226,7 +217,7 @@ export const reactOverrideValueMeta: ToolMeta = {
 export const reactForceRerenderMeta: ToolMeta = {
   name: 'react_force_rerender',
   title: 'Force a re-render',
-  description: 'Schedule an update on a component (and thus its subtree) without changing props or state. Useful to observe render behaviour with react_watch_renders.',
+  description: 'Schedule an update on a component subtree without changing props or state (e.g. to observe with react_watch_renders).',
   inputSchema: { type: 'object', properties: { elementId: elementIdProp }, required: ['elementId'], additionalProperties: false },
   annotations: MUT,
   capability: 'react',
@@ -237,9 +228,9 @@ export const reactProfileStartMeta: ToolMeta = {
   name: 'react_profile_start',
   title: 'Start render profiling',
   description:
-    'Start recording React commits. Each commit records which components rendered, their self render time (dev builds), and ' +
-    'WHY: changed prop keys, changed hook indices, class state, context, first mount, or "parent" (re-rendered only because a parent did). ' +
-    'Interact with the app, then call react_profile_stop for a summary and react_profile_get_commits for details.',
+    'Start recording React commits: which components rendered, self render time (dev builds), and WHY — changed prop keys, ' +
+    'changed hook indices, class state, context, first mount, or "parent" (only because a parent did). Interact, then ' +
+    'react_profile_stop for a summary and react_profile_get_commits for details.',
   inputSchema: { type: 'object', properties: { recordChangeDescriptions: { type: 'boolean', default: true } }, additionalProperties: false },
   annotations: RW,
   capability: 'react',
@@ -250,8 +241,8 @@ export const reactProfileStopMeta: ToolMeta = {
   name: 'react_profile_stop',
   title: 'Stop render profiling',
   description:
-    'Stop the current profiling session and return a summary: commit count, total duration, render-cause histogram, hottest components ' +
-    '(by self time) and most-rendered components with the props that changed most often. Data stays available for react_profile_get_commits unless keepData=false.',
+    'Stop profiling and summarise: commit count, total duration, render-cause histogram, hottest and most-rendered ' +
+    'components with their most-changed props. Data stays available for react_profile_get_commits unless keepData=false.',
   inputSchema: { type: 'object', properties: { keepData: { type: 'boolean', default: true } }, additionalProperties: false },
   annotations: RW,
   capability: 'react',
@@ -261,14 +252,14 @@ export const reactProfileStopMeta: ToolMeta = {
 export const reactProfileGetCommitsMeta: ToolMeta = {
   name: 'react_profile_get_commits',
   title: 'Get profiled commits',
-  description: 'Page through the commits of the last profile: timestamp, duration, and per-component render records (id, name, phase, causes, changedProps, changedHooks, selfDurationMs). Filter by `minDurationMs` or a `component` name regex.',
+  description: 'Page through the commits of the last profile: timestamp, duration, per-component render records (id, name, phase, causes, changedProps, changedHooks, selfDurationMs).',
   inputSchema: {
     type: 'object',
     properties: {
       cursor: { type: 'string' },
       limit: { type: 'integer', minimum: 1, maximum: 200, default: 20 },
       minDurationMs: { type: 'number', minimum: 0 },
-      component: { type: 'string', description: 'Only commits (and renders) matching this component-name regex.' },
+      component: { type: 'string', description: 'Component-name regex filter.' },
     },
     additionalProperties: false,
   },
@@ -281,15 +272,14 @@ export const reactWatchRendersMeta: ToolMeta = {
   name: 'react_watch_renders',
   title: 'Watch renders live',
   description:
-    'Block for `durationMs` (default 10 s) while recording commits, streaming progress, then return a digest: render-cause histogram, ' +
-    'most-rendered/hottest components and a compact timeline like `Counter(props)`, `App(hooks)`, `Themed(context)`, `List(parent)`. ' +
-    'Use it to catch unnecessary re-renders while you (or the user) interact with the page. Cancel any time.',
+    'Block for `durationMs` (default 10 s) recording commits while you or the user interact, then return a digest: ' +
+    'render-cause histogram, hottest components and a compact timeline like `Counter(props)`, `List(parent)`. Catches unnecessary re-renders. Cancel any time.',
   inputSchema: {
     type: 'object',
     properties: {
       durationMs: { type: 'integer', minimum: 100, maximum: 300000, default: 10000 },
       filter: { type: 'object', properties: { nameRegex: { type: 'string' } }, additionalProperties: false },
-      maxEvents: { type: 'integer', minimum: 1, maximum: 5000, default: 500, description: 'Stop early after this many component renders.' },
+      maxEvents: { type: 'integer', minimum: 1, maximum: 5000, default: 500, description: 'Stop early after this many renders.' },
     },
     additionalProperties: false,
   },
@@ -303,22 +293,20 @@ export const pageGetErrorsMeta: ToolMeta = {
   name: 'page_get_errors',
   title: 'Errors since last check',
   description:
-    'Runtime problems recorded in this document since it loaded: uncaught exceptions, unhandled promise rejections, ' +
-    'console.error (React error-boundary catches and React warnings are tagged `react`, with the component stack), failed ' +
-    'TanStack queries/mutations and router match errors. Use it as the verification step after a change or an action: pass ' +
-    'the `latestSeq` from the previous call as `since` to get only what happened in between. Consecutive duplicates are ' +
-    'collapsed with a `count`. Buffer holds the last 200 entries per document.',
+    'Runtime problems recorded since the document loaded: uncaught exceptions, unhandled rejections, console.error ' +
+    '(React ones tagged `react` with the component stack), failed TanStack queries/mutations and router match errors. ' +
+    'Use as the verification step after a change or action: pass the previous call\'s `latestSeq` as `since` to get only what happened in between.',
   inputSchema: {
     type: 'object',
     properties: {
-      since: { type: 'integer', minimum: 0, description: 'Return only entries with seq greater than this (use latestSeq from the previous call).' },
+      since: { type: 'integer', minimum: 0, description: 'Only entries with seq greater than this (latestSeq from the previous call).' },
       kinds: {
         type: 'array',
         items: { type: 'string', enum: ['exception', 'unhandledrejection', 'console.error', 'console.warn', 'react', 'query', 'mutation', 'router'] },
-        description: 'Restrict to these kinds. Default: everything except console.warn.',
+        description: 'Default: everything except console.warn.',
       },
-      includeWarnings: { type: 'boolean', default: false, description: 'Include console.warn entries when `kinds` is not given.' },
-      limit: { type: 'integer', minimum: 1, maximum: 500, default: 50, description: 'Most recent N matching entries.' },
+      includeWarnings: { type: 'boolean', default: false, description: 'Include console.warn when `kinds` is not given.' },
+      limit: { type: 'integer', minimum: 1, maximum: 500, default: 50 },
     },
     additionalProperties: false,
   },
@@ -331,18 +319,16 @@ export const pageSnapshotMeta: ToolMeta = {
   name: 'page_snapshot',
   title: 'Page outline with owning components',
   description:
-    'Compact accessibility-style outline of the page: one line per meaningful element (landmarks, headings, links, buttons, ' +
-    'inputs, lists, paragraphs, anything with data-testid) with role, name, state attributes, a CSS selector and the React ' +
-    'component that rendered it (`→ Name#elementId`, printed where it changes). One call gives both an actionable target ' +
-    '(selector for Playwright / react_find_by_dom) and the component to inspect (elementId for react_inspect_element / ' +
-    'react_explain). Hidden elements are skipped. Prefer this over react_get_tree to orient on what the user sees.',
+    'Compact accessibility-style outline of the page: one line per meaningful element with role, name, state, a CSS ' +
+    'selector and the owning React component (`→ Name#elementId`). One call gives both an automation target (selector) ' +
+    'and the component to inspect (elementId). Prefer this over react_get_tree to orient on what the user sees.',
   inputSchema: {
     type: 'object',
     properties: {
       selector: { type: 'string', description: 'Root element to outline (default body).' },
       maxNodes: { type: 'integer', minimum: 1, maximum: 2000, default: 200 },
-      interactiveOnly: { type: 'boolean', default: false, description: 'Only links, buttons, inputs and other focusable controls.' },
-      format: { type: 'string', enum: ['text', 'json'], default: 'text', description: '`text` = indented outline (fewest tokens); `json` = structured nodes.' },
+      interactiveOnly: { type: 'boolean', default: false, description: 'Only focusable controls.' },
+      format: { type: 'string', enum: ['text', 'json'], default: 'text', description: '`text` = indented outline (fewest tokens).' },
     },
     additionalProperties: false,
   },
@@ -355,14 +341,13 @@ export const reactExplainMeta: ToolMeta = {
   name: 'react_explain',
   title: 'Everything about one component',
   description:
-    'One-call summary of the component behind a DOM element or elementId: props, hooks, contexts, owners and ancestors, the ' +
-    'DOM nodes it renders, and its source location (symbolicated through source maps when available). Equivalent to ' +
-    'react_find_by_dom + react_inspect_element + react_get_dom_nodes + react_get_source. Start here when asked "why does this ' +
-    'element look/behave like that"; follow with the profiler or query tools it points to.',
+    'One-call summary of the component behind a CSS selector or elementId: props, hooks, contexts, owners, rendered DOM ' +
+    'nodes and symbolicated source location. Equivalent to react_find_by_dom + react_inspect_element + react_get_dom_nodes + ' +
+    'react_get_source. Start here for "why does this element look/behave like that".',
   inputSchema: {
     type: 'object',
     properties: {
-      selector: { type: 'string', description: 'CSS selector of a rendered element (from page_snapshot or a Playwright locator).' },
+      selector: { type: 'string', description: 'CSS selector of a rendered element (e.g. from page_snapshot).' },
       nth: { type: 'integer', minimum: 0, default: 0, description: 'Which selector match to use.' },
       elementId: elementIdProp,
       expand: { type: 'array', items: pathSchema, description: 'Paths (relative to {props,state,hooks,context}) to expand in full.' },

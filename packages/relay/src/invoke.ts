@@ -1,4 +1,4 @@
-import { DevtoolsError, type Frame, type ToolError } from '@devtools-mcp/protocol';
+import { AgentDebugError, type Frame, type ToolError } from '@devtools-mcp/protocol';
 
 export interface ProgressUpdate {
   progress?: number;
@@ -14,7 +14,7 @@ export interface PendingCall {
   startedAt: number;
   deadlineAt: number;
   resolve: (v: { result: unknown; doc: string; truncated: boolean }) => void;
-  reject: (e: DevtoolsError) => void;
+  reject: (e: AgentDebugError) => void;
   onProgress?: (u: ProgressUpdate) => void;
   timer: ReturnType<typeof setTimeout>;
 }
@@ -36,7 +36,7 @@ export class InvokeTracker {
       this.pending.delete(call.callId);
       onTimeout(p);
       p.reject(
-        new DevtoolsError('TIMEOUT', `Tool "${p.tool}" on ${p.tab} did not respond within ${Math.round((p.deadlineAt - p.startedAt) / 1000)} s`, {
+        new AgentDebugError('TIMEOUT', `Tool "${p.tool}" on ${p.tab} did not respond within ${Math.round((p.deadlineAt - p.startedAt) / 1000)} s`, {
           hint: 'The page may be busy or frozen. Retry, or check the tab is foregrounded.',
         }),
       );
@@ -58,7 +58,7 @@ export class InvokeTracker {
       case 'invoke.error': {
         const p = this.take(frame.callId);
         if (!p) return true;
-        p.reject(DevtoolsError.from(frame.error as ToolError));
+        p.reject(AgentDebugError.from(frame.error as ToolError));
         return true;
       }
       case 'invoke.progress': {
@@ -71,14 +71,14 @@ export class InvokeTracker {
     }
   }
 
-  cancel(callId: string, error: DevtoolsError): PendingCall | undefined {
+  cancel(callId: string, error: AgentDebugError): PendingCall | undefined {
     const p = this.take(callId);
     p?.reject(error);
     return p;
   }
 
   /** Fail every pending call (e.g. extension disconnected). */
-  failAll(error: DevtoolsError, predicate: (p: PendingCall) => boolean = () => true): void {
+  failAll(error: AgentDebugError, predicate: (p: PendingCall) => boolean = () => true): void {
     for (const p of [...this.pending.values()]) {
       if (!predicate(p)) continue;
       this.take(p.callId);

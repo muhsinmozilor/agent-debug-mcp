@@ -10,7 +10,7 @@
  * (`--silent-debugger-extension-api` hides it). Opening DevTools on a tab ends our session for that tab
  * (`replaced_with_devtools`) — the relay reports it to the client as a closed page.
  */
-import { DevtoolsError, makeFrame, type Frame, type FrameOf, type TabHandle } from '@devtools-mcp/protocol';
+import { AgentDebugError, makeFrame, type Frame, type FrameOf, type TabHandle } from '@devtools-mcp/protocol';
 
 const CDP_VERSION = '1.3';
 
@@ -68,12 +68,12 @@ export class CdpSessions {
         case 'create': {
           const url = f.url ?? 'about:blank';
           if (url !== 'about:blank' && !(await this.isAllowedUrl(url))) {
-            throw new DevtoolsError('INVALID_INPUT', `URL not in the activation allowlist: ${url}`, {
+            throw new AgentDebugError('INVALID_INPUT', `URL not in the activation allowlist: ${url}`, {
               hint: 'Only localhost/127.0.0.1/*.local, allowlisted origins and about:blank can be opened.',
             });
           }
           const created = await chrome.tabs.create({ url, active: true });
-          if (created.id === undefined) throw new DevtoolsError('PAGE_ERROR', 'Chrome did not return a tab id');
+          if (created.id === undefined) throw new AgentDebugError('PAGE_ERROR', 'Chrome did not return a tab id');
           reply({ tab: `t${created.id}`, targetInfo: await this.attach(created.id) });
           return;
         }
@@ -91,7 +91,7 @@ export class CdpSessions {
         }
       }
     } catch (e) {
-      reply({ tab: f.tab, error: DevtoolsError.from(e).toJSON() });
+      reply({ tab: f.tab, error: AgentDebugError.from(e).toJSON() });
     }
   }
 
@@ -121,13 +121,13 @@ export class CdpSessions {
 
   private async attach(tabId: number): Promise<CdpTargetInfo> {
     const found = await chrome.tabs.get(tabId).catch(() => null);
-    if (!found) throw new DevtoolsError('TAB_NOT_FOUND', `Tab t${tabId} no longer exists`, { hint: 'Call tabs_list to see attached tabs.' });
+    if (!found) throw new AgentDebugError('TAB_NOT_FOUND', `Tab t${tabId} no longer exists`, { hint: 'Call tabs_list to see attached tabs.' });
     if (!this.attached.has(tabId)) {
       try {
         await chrome.debugger.attach({ tabId }, CDP_VERSION);
       } catch (e) {
         const message = (e as Error).message ?? String(e);
-        throw new DevtoolsError('PAGE_ERROR', `Could not attach the debugger to tab t${tabId}: ${message}`, {
+        throw new AgentDebugError('PAGE_ERROR', `Could not attach the debugger to tab t${tabId}: ${message}`, {
           hint: /already attached/i.test(message)
             ? 'Another debugger (Chrome DevTools or another extension) is attached to this tab. Close it and reconnect the CDP client.'
             : /not allowed|cannot|restricted|policy/i.test(message)
@@ -141,7 +141,7 @@ export class CdpSessions {
     const res = (await chrome.debugger.sendCommand({ tabId }, 'Target.getTargetInfo')) as { targetInfo?: CdpTargetInfo } | undefined;
     if (!res?.targetInfo?.targetId) {
       await this.detach(tabId);
-      throw new DevtoolsError('PAGE_ERROR', `Target.getTargetInfo returned nothing for tab t${tabId}`);
+      throw new AgentDebugError('PAGE_ERROR', `Target.getTargetInfo returned nothing for tab t${tabId}`);
     }
     return res.targetInfo;
   }
@@ -153,7 +153,7 @@ export class CdpSessions {
 }
 
 function tabIdOf(f: FrameOf<'cdp.request'>): number {
-  if (!f.tab) throw new DevtoolsError('INVALID_INPUT', `cdp.request ${f.op} needs a tab`);
+  if (!f.tab) throw new AgentDebugError('INVALID_INPUT', `cdp.request ${f.op} needs a tab`);
   return Number(f.tab.slice(1));
 }
 

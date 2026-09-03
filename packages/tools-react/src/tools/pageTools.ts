@@ -1,4 +1,4 @@
-import { DevtoolsError, defineTool, type ErrorLog, type PageErrorKind, type Path } from '@devtools-mcp/protocol';
+import { AgentDebugError, defineTool, type ErrorLog, type PageErrorKind, type Path } from '@devtools-mcp/protocol';
 import { getOwnerStack, getSource } from 'bippy/source';
 import { pageGetErrorsMeta, pageSnapshotMeta, reactExplainMeta } from '../descriptors.js';
 import { ancestorsOf, componentForElement, describeElement, hostElementsOf, nearestComposite } from '../dom.js';
@@ -19,7 +19,7 @@ export function createPageTools(ctx: PageToolContext) {
     ...pageGetErrorsMeta,
     execute: ({ since, kinds, limit, includeWarnings }) => {
       const log = ctx.errors;
-      if (!log) throw new DevtoolsError('CAPABILITY_UNAVAILABLE', 'Error capture is not installed on this page', { hint: 'The extension installs it at document_start; reload the tab.' });
+      if (!log) throw new AgentDebugError('CAPABILITY_UNAVAILABLE', 'Error capture is not installed on this page', { hint: 'The extension installs it at document_start; reload the tab.' });
       const wanted = new Set<PageErrorKind>(kinds && kinds.length ? kinds : KINDS.filter((k) => includeWarnings || k !== 'console.warn'));
       const all = log.since(since ?? 0).filter((e) => wanted.has(e.kind));
       const max = Math.min(Math.max(limit ?? 50, 1), 500);
@@ -45,9 +45,9 @@ export function createPageTools(ctx: PageToolContext) {
         try {
           found = document.querySelector(selector);
         } catch (e) {
-          throw new DevtoolsError('INVALID_INPUT', `Invalid selector: ${(e as Error).message}`);
+          throw new AgentDebugError('INVALID_INPUT', `Invalid selector: ${(e as Error).message}`);
         }
-        if (!found) throw new DevtoolsError('INVALID_INPUT', `No element matches ${selector}`);
+        if (!found) throw new AgentDebugError('INVALID_INPUT', `No element matches ${selector}`);
         root = found;
       }
       const res = snapshot({ root, maxNodes, interactiveOnly });
@@ -70,19 +70,19 @@ export function createPageTools(ctx: PageToolContext) {
         try {
           nodes = Array.from(document.querySelectorAll(selector));
         } catch (e) {
-          throw new DevtoolsError('INVALID_INPUT', `Invalid selector: ${(e as Error).message}`);
+          throw new AgentDebugError('INVALID_INPUT', `Invalid selector: ${(e as Error).message}`);
         }
         matches = nodes.length;
         const el = nodes[nth ?? 0];
-        if (!el) throw new DevtoolsError('INVALID_INPUT', matches === 0 ? `No element matches ${selector}` : `nth=${nth} out of range (matches: ${matches})`);
+        if (!el) throw new AgentDebugError('INVALID_INPUT', matches === 0 ? `No element matches ${selector}` : `nth=${nth} out of range (matches: ${matches})`);
         const composite = nearestComposite(getFiber(el));
         if (!composite) {
-          throw new DevtoolsError('INVALID_INPUT', `${selector} is not rendered by React`, { hint: 'The element has no fiber; it may be static HTML or belong to another renderer.', data: componentForElement(el) });
+          throw new AgentDebugError('INVALID_INPUT', `${selector} is not rendered by React`, { hint: 'The element has no fiber; it may be static HTML or belong to another renderer.', data: componentForElement(el) });
         }
         fiber = composite;
         matched = describeElement(el);
       } else {
-        throw new DevtoolsError('INVALID_INPUT', 'Provide selector or elementId');
+        throw new AgentDebugError('INVALID_INPUT', 'Provide selector or elementId');
       }
       const inspected = inspectFiber(fiber, { expand, budget: { depth: 2, maxKeys: 30, maxString: 120 } });
       const fetchFn: typeof fetch = (url, init) => fetch(url, { ...init, signal });

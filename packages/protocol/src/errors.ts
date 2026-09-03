@@ -40,7 +40,7 @@ const RETRYABLE: ReadonlySet<ErrorCode> = new Set<ErrorCode>([
 /**
  * Error type thrown by tool implementations and relay plumbing. Serialises to a `ToolError`.
  */
-export class DevtoolsError extends Error {
+export class AgentDebugError extends Error {
   readonly code: ErrorCode;
   readonly hint: string | undefined;
   readonly data: unknown;
@@ -48,7 +48,7 @@ export class DevtoolsError extends Error {
 
   constructor(code: ErrorCode, message: string, options: { hint?: string; data?: unknown; retryable?: boolean } = {}) {
     super(message);
-    this.name = 'DevtoolsError';
+    this.name = 'AgentDebugError';
     this.code = code;
     this.hint = options.hint;
     this.data = options.data;
@@ -62,16 +62,16 @@ export class DevtoolsError extends Error {
     return out;
   }
 
-  static from(err: unknown, fallback: ErrorCode = 'PAGE_ERROR'): DevtoolsError {
-    if (err instanceof DevtoolsError) return err;
+  static from(err: unknown, fallback: ErrorCode = 'PAGE_ERROR'): AgentDebugError {
+    if (err instanceof AgentDebugError) return err;
     if (isToolErrorLike(err)) {
-      return new DevtoolsError(err.code, err.message, { hint: err.hint, data: err.data, retryable: err.retryable });
+      return new AgentDebugError(err.code, err.message, { hint: err.hint, data: err.data, retryable: err.retryable });
     }
     if (err instanceof Error) {
-      if (err.name === 'AbortError') return new DevtoolsError('CANCELLED', 'Operation was cancelled');
-      return new DevtoolsError(fallback, err.message);
+      if (err.name === 'AbortError') return new AgentDebugError('CANCELLED', 'Operation was cancelled');
+      return new AgentDebugError(fallback, err.message);
     }
-    return new DevtoolsError(fallback, typeof err === 'string' ? err : 'Unknown error');
+    return new AgentDebugError(fallback, typeof err === 'string' ? err : 'Unknown error');
   }
 }
 

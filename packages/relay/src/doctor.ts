@@ -285,14 +285,14 @@ export function checkMcpConfig(path: string, expected: { port: number; cdpUrl: s
     return { id: 'config', title, status: 'fail', detail: `${path} is not valid JSON (${(e as Error).message})`, fix: 'Fix the file or delete it and run `npx agent-debug-mcp init`.' };
   }
   const servers = cfg.mcpServers ?? {};
-  const devtools = Object.values(servers).find((s) => {
+  const agentDebug = Object.values(servers).find((s) => {
     const args = Array.isArray(s.args) ? (s.args as unknown[]).join(' ') : '';
     return args.includes('agent-debug-mcp') || (typeof s.url === 'string' && s.url.includes(`:${expected.port}/mcp`));
   });
-  if (!devtools) return { id: 'config', title, status: 'warn', detail: `${path} has no agent-debug-mcp server`, fix: 'Run `npx agent-debug-mcp init` (merges into the existing file).' };
+  if (!agentDebug) return { id: 'config', title, status: 'warn', detail: `${path} has no agent-debug-mcp server`, fix: 'Run `npx agent-debug-mcp init` (merges into the existing file).' };
   // stdio entries pin the port via --port (http entries were matched by URL above); flag a mismatch.
-  if (typeof devtools.url !== 'string') {
-    const args = Array.isArray(devtools.args) ? (devtools.args as string[]) : [];
+  if (typeof agentDebug.url !== 'string') {
+    const args = Array.isArray(agentDebug.args) ? (agentDebug.args as string[]) : [];
     const portIdx = args.indexOf('--port');
     const cfgPort = portIdx >= 0 ? Number(args[portIdx + 1]) : DEFAULTS.relayPort;
     if (cfgPort !== expected.port) {

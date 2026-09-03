@@ -1,4 +1,4 @@
-import { DevtoolsError } from '@devtools-mcp/protocol';
+import { AgentDebugError } from '@devtools-mcp/protocol';
 import { componentForElement, elementAtPoint, isOverlayNode, type ElementComponentInfo } from './dom.js';
 import { clearHighlight, highlightElements } from './overlay.js';
 import { nameOf } from './naming.js';
@@ -27,7 +27,7 @@ export function pickElement(opts: { timeoutMs: number; signal: AbortSignal }): P
     };
     active = () => {
       finish();
-      reject(new DevtoolsError('CANCELLED', 'Superseded by a newer page_pick_element call'));
+      reject(new AgentDebugError('CANCELLED', 'Superseded by a newer page_pick_element call'));
     };
     const onMove = (e: MouseEvent): void => {
       const el = elementAtPoint(e.clientX, e.clientY);
@@ -44,7 +44,7 @@ export function pickElement(opts: { timeoutMs: number; signal: AbortSignal }): P
       const el = elementAtPoint(e.clientX, e.clientY);
       finish();
       if (!el) {
-        reject(new DevtoolsError('PAGE_ERROR', 'No element under the pointer'));
+        reject(new AgentDebugError('PAGE_ERROR', 'No element under the pointer'));
         return;
       }
       resolve(componentForElement(el));
@@ -53,16 +53,16 @@ export function pickElement(opts: { timeoutMs: number; signal: AbortSignal }): P
       if (e.key === 'Escape') {
         swallow(e);
         finish();
-        reject(new DevtoolsError('CANCELLED', 'User pressed Escape'));
+        reject(new AgentDebugError('CANCELLED', 'User pressed Escape'));
       }
     };
     const onAbort = (): void => {
       finish();
-      reject(new DevtoolsError('CANCELLED', 'Cancelled by the client'));
+      reject(new AgentDebugError('CANCELLED', 'Cancelled by the client'));
     };
     const timer = setTimeout(() => {
       finish();
-      reject(new DevtoolsError('TIMEOUT', `No element was picked within ${Math.round(opts.timeoutMs / 1000)} s`));
+      reject(new AgentDebugError('TIMEOUT', `No element was picked within ${Math.round(opts.timeoutMs / 1000)} s`));
     }, opts.timeoutMs);
     document.addEventListener('mousemove', onMove, true);
     document.addEventListener('click', onClick, true);

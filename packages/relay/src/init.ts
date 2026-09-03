@@ -8,6 +8,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { DEFAULTS } from '@devtools-mcp/protocol';
 import { loadOrCreateConfig } from './config.js';
+import { writeSkill, type WriteSkillResult } from './skill.js';
 
 export type McpServerEntry = Record<string, unknown>;
 export interface McpConfigFile {
@@ -25,6 +26,8 @@ export interface InitOptions {
   transport?: 'stdio' | 'http';
   /** Also add a separate `playwright` server (@playwright/mcp --cdp-endpoint). The page_* browser tools are built into the relay, so default false. */
   externalPlaywright?: boolean;
+  /** Also write the Claude Code skill (kept fresh on package updates by the stdio proxy and `call`). Default true. */
+  skill?: boolean;
 }
 
 export interface InitResult {
@@ -33,9 +36,11 @@ export interface InitResult {
   config: McpConfigFile;
   cdpUrl: string | null;
   pairUrl: string;
+  /** Skill file written alongside the config; null with skill: false. */
+  skill: WriteSkillResult | null;
 }
 
-export function devtoolsServerEntry(opts: { port: number; host: string; transport: 'stdio' | 'http' }): McpServerEntry {
+export function agentDebugServerEntry(opts: { port: number; host: string; transport: 'stdio' | 'http' }): McpServerEntry {
   if (opts.transport === 'http') return { type: 'http', url: `http://${opts.host}:${opts.port}/mcp` };
   const args = ['-y', 'agent-debug-mcp'];
   if (opts.port !== DEFAULTS.relayPort) args.push('--port', String(opts.port));
@@ -47,9 +52,9 @@ export function playwrightServerEntry(cdpUrl: string): McpServerEntry {
 }
 
 /** Pure merge: keeps every other server and top-level key, replaces only `agent-debug` (and `playwright` when an entry is passed — otherwise an existing `playwright` entry is deliberately left untouched: users may run their own). */
-export function mergeMcpConfig(existing: McpConfigFile, entries: { devtools: McpServerEntry; playwright?: McpServerEntry }): McpConfigFile {
+export function mergeMcpConfig(existing: McpConfigFile, entries: { agentDebug: McpServerEntry; playwright?: McpServerEntry }): McpConfigFile {
   const servers = { ...(existing.mcpServers ?? {}) };
-  servers['agent-debug'] = entries.devtools;
+  servers['agent-debug'] = entries.agentDebug;
   if (entries.playwright) servers.playwright = entries.playwright;
   return { ...existing, mcpServers: servers };
 }
@@ -76,10 +81,11 @@ export function runInit(opts: InitOptions = {}): InitResult {
     }
   }
   const config = mergeMcpConfig(existing, {
-    devtools: devtoolsServerEntry({ port, host, transport }),
+    agentDebug: agentDebugServerEntry({ port, host, transport }),
     ...(cdpUrl ? { playwright: playwrightServerEntry(cdpUrl) } : {}),
   });
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(config, null, 2)}\n`);
-  return { path, created, config, cdpUrl, pairUrl: `http://${host}:${port}/pair` };
+  const skill = opts.skill !== false ? writeSkill({ cwd }) : null;
+  return { path, created, config, cdpUrl, pairUrl: `http://${host}:${port}/pair`, skill };
 }

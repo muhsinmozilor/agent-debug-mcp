@@ -5,7 +5,7 @@
  */
 import { defineContentScript } from 'wxt/utils/define-content-script';
 import {
-  DevtoolsError,
+  AgentDebugError,
   ErrorLog,
   HANDSHAKE_KEY,
   HandshakeSchema,
@@ -93,7 +93,7 @@ export default defineContentScript({
             send(out);
           } catch (e) {
             if (ac.signal.aborted) return;
-            send(makeFrame({ t: 'invoke.error', callId: frame.callId, error: DevtoolsError.from(e).toJSON() }));
+            send(makeFrame({ t: 'invoke.error', callId: frame.callId, error: AgentDebugError.from(e).toJSON() }));
           } finally {
             inflight.delete(frame.callId);
           }

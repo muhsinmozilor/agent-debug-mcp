@@ -1,4 +1,4 @@
-import { DevtoolsError, decodeCursor, encodeCursor, type Page } from '@devtools-mcp/protocol';
+import { AgentDebugError, decodeCursor, encodeCursor, type Page } from '@devtools-mcp/protocol';
 import type { Fiber } from 'bippy';
 import { elementIdOf, resolveElement } from './elements.js';
 import { getAllRoots, getReactHookState } from './hook.js';
@@ -97,7 +97,7 @@ function countVisibleChildren(fiber: Fiber, filter: Required<Pick<TreeFilter, 'h
 
 export function getTree(opts: TreeOptions): Page<TreeNode> & { generation: number; treeChanged: boolean } {
   const state = getReactHookState();
-  if (!state) throw new DevtoolsError('CAPABILITY_UNAVAILABLE', 'React hook not initialised');
+  if (!state) throw new AgentDebugError('CAPABILITY_UNAVAILABLE', 'React hook not initialised');
   const maxDepth = opts.maxDepth ?? 6;
   const maxNodes = Math.max(1, Math.min(opts.maxNodes ?? 200, 2000));
   const filter = { hideHost: opts.filter?.hideHost ?? true, hideWrappers: opts.filter?.hideWrappers ?? true };
@@ -108,8 +108,8 @@ export function getTree(opts: TreeOptions): Page<TreeNode> & { generation: numbe
   let treeChanged = false;
   if (opts.cursor) {
     const c = decodeCursor(opts.cursor);
-    if (!c || c.kind !== 'tree') throw new DevtoolsError('STALE_CURSOR', 'Invalid cursor');
-    if (c.doc !== opts.docId) throw new DevtoolsError('STALE_CURSOR', 'Cursor belongs to a previous document', { hint: 'Start again without a cursor.' });
+    if (!c || c.kind !== 'tree') throw new AgentDebugError('STALE_CURSOR', 'Invalid cursor');
+    if (c.doc !== opts.docId) throw new AgentDebugError('STALE_CURSOR', 'Cursor belongs to a previous document', { hint: 'Start again without a cursor.' });
     startPos = Number(c.pos);
     treeChanged = c.gen !== state.generation;
   }
@@ -192,6 +192,6 @@ function safeRegex(src: string): RegExp {
   try {
     return new RegExp(src, 'i');
   } catch (e) {
-    throw new DevtoolsError('INVALID_INPUT', `Invalid nameRegex: ${(e as Error).message}`);
+    throw new AgentDebugError('INVALID_INPUT', `Invalid nameRegex: ${(e as Error).message}`);
   }
 }

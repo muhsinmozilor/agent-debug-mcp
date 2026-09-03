@@ -1,4 +1,4 @@
-import { DevtoolsError, type Capability, type TabHandle, type TabInfo, type ToolDescriptor } from '@devtools-mcp/protocol';
+import { AgentDebugError, type Capability, type TabHandle, type TabInfo, type ToolDescriptor } from '@devtools-mcp/protocol';
 
 export interface TabRecord extends TabInfo {
   tools: Map<string, ToolDescriptor>;
@@ -101,24 +101,24 @@ export class TabRegistry {
     if (tab !== undefined) {
       const rec = this.get(tab as TabHandle);
       if (!rec) {
-        throw new DevtoolsError('TAB_NOT_FOUND', `Tab "${tab}" is not attached`, {
+        throw new AgentDebugError('TAB_NOT_FOUND', `Tab "${tab}" is not attached`, {
           hint: 'Call tabs_list to see attached tabs.',
           data: { tabs: this.summaries() },
         });
       }
       if (rec.state === 'frozen') {
-        throw new DevtoolsError('TAB_FROZEN', `Tab "${tab}" is in the back/forward cache`, { hint: 'Activate the tab or navigate to it, then retry.' });
+        throw new AgentDebugError('TAB_FROZEN', `Tab "${tab}" is in the back/forward cache`, { hint: 'Activate the tab or navigate to it, then retry.' });
       }
       return rec;
     }
     const live = this.list().filter((t) => t.state === 'attached');
     if (live.length === 1) return live[0] as TabRecord;
     if (live.length === 0) {
-      throw new DevtoolsError('TAB_NOT_FOUND', 'No tabs are attached', {
+      throw new AgentDebugError('TAB_NOT_FOUND', 'No tabs are attached', {
         hint: 'Open your app on localhost in Chrome with the Agent Debug MCP extension enabled, then call tabs_list.',
       });
     }
-    throw new DevtoolsError('AMBIGUOUS_TAB', `${live.length} tabs are attached; pass "tab" explicitly`, {
+    throw new AgentDebugError('AMBIGUOUS_TAB', `${live.length} tabs are attached; pass "tab" explicitly`, {
       data: { tabs: this.summaries() },
     });
   }

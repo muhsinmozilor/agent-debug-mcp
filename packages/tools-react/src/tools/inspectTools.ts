@@ -1,4 +1,4 @@
-import { DevtoolsError, defineTool, type Path } from '@devtools-mcp/protocol';
+import { AgentDebugError, defineTool, type Path } from '@devtools-mcp/protocol';
 import { isCompositeFiber, type Fiber } from 'bippy';
 import { getOwnerStack, getSource } from 'bippy/source';
 import {
@@ -27,13 +27,13 @@ export const reactInspectElement = defineTool<{ elementId: number; expand?: Path
 export const reactSearchComponents = defineTool<{ nameRegex?: string; propsContains?: string; limit?: number }, unknown>({
   ...reactSearchComponentsMeta,
   execute: ({ nameRegex, propsContains, limit }) => {
-    if (!nameRegex && !propsContains) throw new DevtoolsError('INVALID_INPUT', 'Provide nameRegex and/or propsContains');
+    if (!nameRegex && !propsContains) throw new AgentDebugError('INVALID_INPUT', 'Provide nameRegex and/or propsContains');
     let re: RegExp | null = null;
     if (nameRegex) {
       try {
         re = new RegExp(nameRegex, 'i');
       } catch (e) {
-        throw new DevtoolsError('INVALID_INPUT', `Invalid nameRegex: ${(e as Error).message}`);
+        throw new AgentDebugError('INVALID_INPUT', `Invalid nameRegex: ${(e as Error).message}`);
       }
     }
     const needle = propsContains?.toLowerCase();
@@ -72,11 +72,11 @@ export const reactFindByDom = defineTool<{ selector: string; nth?: number }, unk
     try {
       nodes = Array.from(document.querySelectorAll(selector));
     } catch (e) {
-      throw new DevtoolsError('INVALID_INPUT', `Invalid selector: ${(e as Error).message}`);
+      throw new AgentDebugError('INVALID_INPUT', `Invalid selector: ${(e as Error).message}`);
     }
     if (nodes.length === 0) return { total: 0, matches: [] };
     const picked = nth === undefined ? nodes.slice(0, 10) : nodes[nth] ? [nodes[nth] as Element] : [];
-    if (nth !== undefined && picked.length === 0) throw new DevtoolsError('INVALID_INPUT', `nth=${nth} out of range (matches: ${nodes.length})`);
+    if (nth !== undefined && picked.length === 0) throw new AgentDebugError('INVALID_INPUT', `nth=${nth} out of range (matches: ${nodes.length})`);
     return { total: nodes.length, matches: picked.map(componentForElement) };
   },
 });
@@ -124,11 +124,11 @@ export const pageHighlight = defineTool<{ elementId?: number; selector?: string;
       try {
         els = Array.from(document.querySelectorAll(selector)).slice(0, 50);
       } catch (e) {
-        throw new DevtoolsError('INVALID_INPUT', `Invalid selector: ${(e as Error).message}`);
+        throw new AgentDebugError('INVALID_INPUT', `Invalid selector: ${(e as Error).message}`);
       }
       caption ??= selector;
     } else {
-      throw new DevtoolsError('INVALID_INPUT', 'Provide elementId or selector');
+      throw new AgentDebugError('INVALID_INPUT', 'Provide elementId or selector');
     }
     const shown = highlightElements(els, caption, durationMs ?? 3000);
     return { highlighted: shown, durationMs: durationMs ?? 3000 };

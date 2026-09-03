@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { makeFrame, parseFrame } from '../src/frame.js';
 import { decodeCursor, encodeCursor } from '../src/cursor.js';
 import { hashSchema, toDescriptor, defineTool } from '../src/tool.js';
-import { DevtoolsError } from '../src/errors.js';
+import { AgentDebugError } from '../src/errors.js';
 
 describe('frames', () => {
   it('round-trips through the schema', () => {
@@ -58,11 +58,11 @@ describe('tool descriptors', () => {
   });
 });
 
-describe('DevtoolsError', () => {
+describe('AgentDebugError', () => {
   it('serialises and infers retryable', () => {
-    const e = new DevtoolsError('TIMEOUT', 'slow', { hint: 'retry' });
+    const e = new AgentDebugError('TIMEOUT', 'slow', { hint: 'retry' });
     expect(e.toJSON()).toEqual({ code: 'TIMEOUT', message: 'slow', hint: 'retry', retryable: true });
-    expect(DevtoolsError.from(new Error('x')).code).toBe('PAGE_ERROR');
-    expect(DevtoolsError.from({ code: 'TAB_NOT_FOUND', message: 'm', retryable: false }).code).toBe('TAB_NOT_FOUND');
+    expect(AgentDebugError.from(new Error('x')).code).toBe('PAGE_ERROR');
+    expect(AgentDebugError.from({ code: 'TAB_NOT_FOUND', message: 'm', retryable: false }).code).toBe('TAB_NOT_FOUND');
   });
 });

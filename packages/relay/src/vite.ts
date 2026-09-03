@@ -21,8 +21,8 @@ export interface AgentDebugMcpOptions {
 
 export const QUERY_MODULE = '@tanstack/react-query';
 export const ROUTER_MODULE = '@tanstack/react-router';
-const VIRTUAL_QUERY = '\0devtools-mcp/tanstack-query';
-const VIRTUAL_ROUTER = '\0devtools-mcp/tanstack-router';
+const VIRTUAL_QUERY = '\0agent-debug-mcp/tanstack-query';
+const VIRTUAL_ROUTER = '\0agent-debug-mcp/tanstack-router';
 
 const QUERY_WRAPPER = `export * from ${JSON.stringify(QUERY_MODULE)};
 import { QueryClient as __DtmcpBaseQueryClient } from ${JSON.stringify(QUERY_MODULE)};

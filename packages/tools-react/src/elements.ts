@@ -1,4 +1,4 @@
-import { DevtoolsError } from '@devtools-mcp/protocol';
+import { AgentDebugError } from '@devtools-mcp/protocol';
 import { getFiberById, getFiberId, type Fiber } from 'bippy';
 
 /** Stable numeric id for a fiber (shared with its alternate). */
@@ -10,7 +10,7 @@ export function elementIdOf(fiber: Fiber): number {
 export function resolveElement(elementId: number): Fiber {
   const fiber = getFiberById(elementId);
   if (!fiber) {
-    throw new DevtoolsError('STALE_ELEMENT', `No mounted component with id ${elementId}`, {
+    throw new AgentDebugError('STALE_ELEMENT', `No mounted component with id ${elementId}`, {
       hint: 'The component unmounted or the page navigated. Re-run react_get_tree or react_search_components to get fresh ids.',
     });
   }

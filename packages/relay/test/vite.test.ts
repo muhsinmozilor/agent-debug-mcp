@@ -19,7 +19,7 @@ describe('agent-debug-mcp/vite', () => {
     expect(cfg.optimizeDeps.include.sort()).toEqual([QUERY_MODULE, ROUTER_MODULE]);
 
     const vq = call(p, 'resolveId', QUERY_MODULE, '/src/main.tsx') as string;
-    expect(vq).toMatch(/^\0devtools-mcp\/tanstack-query$/);
+    expect(vq).toMatch(/^\0agent-debug-mcp\/tanstack-query$/);
     // The wrapper's own import of the real package passes through.
     expect(call(p, 'resolveId', QUERY_MODULE, vq)).toBeNull();
     expect(call(p, 'resolveId', 'react', '/src/main.tsx')).toBeNull();

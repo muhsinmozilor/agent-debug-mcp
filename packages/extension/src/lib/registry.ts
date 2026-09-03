@@ -3,7 +3,7 @@
  * document; exposed to the relay via the ISOLATED bridge.
  */
 import {
-  DevtoolsError,
+  AgentDebugError,
   capabilityHint,
   encode,
   toDescriptor,
@@ -72,7 +72,7 @@ export class ToolRegistry {
   }
 
   /**
-   * Execute a tool by name. Throws DevtoolsError for unknown tools / missing capability;
+   * Execute a tool by name. Throws AgentDebugError for unknown tools / missing capability;
    * wraps implementation errors as PAGE_ERROR. The result is encoded for transport.
    */
   async execute(
@@ -81,9 +81,9 @@ export class ToolRegistry {
     opts: { signal: AbortSignal; progress?: (u: { progress?: number; total?: number; message?: string; data?: unknown }) => void },
   ): Promise<{ result: Enc; truncated: boolean }> {
     const tool = this.tools.get(name);
-    if (!tool) throw new DevtoolsError('TOOL_NOT_FOUND', `Unknown tool "${name}"`);
+    if (!tool) throw new AgentDebugError('TOOL_NOT_FOUND', `Unknown tool "${name}"`);
     if (!this.capabilities.has(tool.capability)) {
-      throw new DevtoolsError('CAPABILITY_UNAVAILABLE', `Capability "${tool.capability}" is not present on this page`, {
+      throw new AgentDebugError('CAPABILITY_UNAVAILABLE', `Capability "${tool.capability}" is not present on this page`, {
         hint: capabilityHint(tool.capability),
         data: { capability: tool.capability, present: [...this.capabilities] },
       });
@@ -92,7 +92,7 @@ export class ToolRegistry {
     try {
       raw = await tool.execute(input ?? {}, opts);
     } catch (e) {
-      throw DevtoolsError.from(e);
+      throw AgentDebugError.from(e);
     }
     // Tools already encode page values (props, data…) with `encode()`; their results must be JSON-safe.
     // Pass them through untouched — re-encoding would mangle nested stubs. Fall back to a tagged
@@ -105,7 +105,7 @@ export class ToolRegistry {
       return { result: enc.value, truncated: true };
     }
     if (json.length > MAX_RESULT_BYTES) {
-      throw new DevtoolsError('PAYLOAD_TOO_LARGE', `Tool result is ${(json.length / 1024).toFixed(0)} KB (limit ${MAX_RESULT_BYTES / 1024} KB)`, {
+      throw new AgentDebugError('PAYLOAD_TOO_LARGE', `Tool result is ${(json.length / 1024).toFixed(0)} KB (limit ${MAX_RESULT_BYTES / 1024} KB)`, {
         hint: 'Use pagination (maxNodes/limit/cursor), a tighter `budget`, or `expand` specific paths instead.',
       });
     }

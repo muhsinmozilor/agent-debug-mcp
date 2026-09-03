@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { checkMcpConfig } from '../src/doctor.js';
-import { devtoolsServerEntry, mergeMcpConfig, playwrightServerEntry, runInit } from '../src/init.js';
+import { agentDebugServerEntry, mergeMcpConfig, playwrightServerEntry, runInit } from '../src/init.js';
 
 describe('init', () => {
   let home: string;
@@ -15,13 +15,13 @@ describe('init', () => {
   });
 
   it('builds entries and merges without touching other servers', () => {
-    expect(devtoolsServerEntry({ port: 9333, host: '127.0.0.1', transport: 'stdio' })).toEqual({ command: 'npx', args: ['-y', 'agent-debug-mcp'] });
-    expect(devtoolsServerEntry({ port: 9400, host: '127.0.0.1', transport: 'stdio' })).toEqual({ command: 'npx', args: ['-y', 'agent-debug-mcp', '--port', '9400'] });
-    expect(devtoolsServerEntry({ port: 9333, host: '127.0.0.1', transport: 'http' })).toEqual({ type: 'http', url: 'http://127.0.0.1:9333/mcp' });
+    expect(agentDebugServerEntry({ port: 9333, host: '127.0.0.1', transport: 'stdio' })).toEqual({ command: 'npx', args: ['-y', 'agent-debug-mcp'] });
+    expect(agentDebugServerEntry({ port: 9400, host: '127.0.0.1', transport: 'stdio' })).toEqual({ command: 'npx', args: ['-y', 'agent-debug-mcp', '--port', '9400'] });
+    expect(agentDebugServerEntry({ port: 9333, host: '127.0.0.1', transport: 'http' })).toEqual({ type: 'http', url: 'http://127.0.0.1:9333/mcp' });
     // Without a playwright entry the merge leaves an existing `playwright` server untouched (users may run their own).
     const kept = mergeMcpConfig(
       { mcpServers: { github: { command: 'gh-mcp' }, playwright: { command: 'their-own' }, 'agent-debug': { old: true } }, other: 1 },
-      { devtools: devtoolsServerEntry({ port: 9333, host: '127.0.0.1', transport: 'stdio' }) },
+      { agentDebug: agentDebugServerEntry({ port: 9333, host: '127.0.0.1', transport: 'stdio' }) },
     );
     expect(kept.other).toBe(1);
     expect(kept.mcpServers!.github).toEqual({ command: 'gh-mcp' });
@@ -30,7 +30,7 @@ describe('init', () => {
     // With one (init --external-playwright) it is written.
     const merged = mergeMcpConfig(
       { mcpServers: {} },
-      { devtools: devtoolsServerEntry({ port: 9333, host: '127.0.0.1', transport: 'stdio' }), playwright: playwrightServerEntry('http://127.0.0.1:9333/cdp/tok') },
+      { agentDebug: agentDebugServerEntry({ port: 9333, host: '127.0.0.1', transport: 'stdio' }), playwright: playwrightServerEntry('http://127.0.0.1:9333/cdp/tok') },
     );
     expect(merged.mcpServers!.playwright).toEqual({ command: 'npx', args: ['-y', '@playwright/mcp@latest', '--cdp-endpoint', 'http://127.0.0.1:9333/cdp/tok'] });
   });
@@ -39,6 +39,10 @@ describe('init', () => {
     const first = runInit({ cwd });
     expect(first.created).toBe(true);
     expect(first.cdpUrl).toBeNull();
+    // The Claude Code skill is written alongside the config (skill: false opts out).
+    expect(first.skill).toMatchObject({ path: join(cwd, '.claude/skills/agent-debug/SKILL.md'), created: true });
+    expect(readFileSync(first.skill!.path, 'utf8')).toMatch(/^name: agent-debug$/m);
+    expect(runInit({ cwd: mkdtempSync(join(tmpdir(), 'dtmcp-noskill-')), skill: false }).skill).toBeNull();
     const onDisk = JSON.parse(readFileSync(first.path, 'utf8')) as { mcpServers: Record<string, unknown> };
     expect(Object.keys(onDisk.mcpServers)).toEqual(['agent-debug']);
     const cfg = JSON.parse(readFileSync(join(home, 'relay.json'), 'utf8')) as { cdpToken: string };

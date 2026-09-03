@@ -15,7 +15,10 @@ export type { EmbeddedTool, PlaywrightBridge, PlaywrightBridgeOptions } from './
 export { ExtensionLink } from './extension-link.js';
 export { CdpBridge, CdpError } from './cdp.js';
 export { PROMPTS, registerPrompts } from './prompts.js';
-export { runInit, mergeMcpConfig, devtoolsServerEntry, playwrightServerEntry } from './init.js';
+export { runInit, mergeMcpConfig, agentDebugServerEntry, playwrightServerEntry } from './init.js';
+export { runCall } from './call.js';
+export { generateSkillMd, writeSkill, refreshSkillIfStale, SKILL_DEFAULT_PATH } from './skill.js';
+export type { WriteSkillOptions, WriteSkillResult, RefreshSkillResult } from './skill.js';
 export type { InitOptions, InitResult, McpConfigFile } from './init.js';
 export { ensureRelayDaemon, stopRelayDaemon, fetchRelayHealth, readDaemonInfo, daemonPidFile, daemonLogFile } from './daemon.js';
 export type { EnsureDaemonOptions, EnsureDaemonResult, StopDaemonResult, DaemonInfo, RelayHealth } from './daemon.js';

@@ -9,13 +9,12 @@ export const listQueriesMeta: ToolMeta = {
   name: 'tanstack_query_list_queries',
   title: 'List TanStack queries',
   description:
-    'List queries in the TanStack Query cache with a compact summary each: queryKey, queryHash, status (pending/error/success), ' +
-    'fetchStatus (fetching/paused/idle), isStale, isInvalidated, observer count, dataUpdatedAt, error and a short data preview. ' +
-    'Filter by `queryKeyPrefix` (array prefix match), `status`, or `stale`. Paginate with `cursor`. Use tanstack_query_get_query for full data.',
+    'List queries in the TanStack Query cache with a compact summary each: queryKey, queryHash, status, fetchStatus, ' +
+    'isStale, isInvalidated, observer count, dataUpdatedAt, error and a short data preview. Use tanstack_query_get_query for full data.',
   inputSchema: {
     type: 'object',
     properties: {
-      queryKeyPrefix: { type: 'array', items: {}, description: 'Only queries whose key starts with this prefix, e.g. ["users"].' },
+      queryKeyPrefix: { type: 'array', items: {}, description: 'Array prefix match, e.g. ["users"].' },
       status: { type: 'string', enum: ['pending', 'error', 'success', 'loading'] },
       fetchStatus: { type: 'string', enum: ['fetching', 'paused', 'idle'] },
       stale: { type: 'boolean', description: 'true = only stale queries; false = only fresh.' },
@@ -34,9 +33,8 @@ export const getQueryMeta: ToolMeta = {
   name: 'tanstack_query_get_query',
   title: 'Get a TanStack query',
   description:
-    'Full detail of one query by `queryHash` (preferred, from list_queries) or exact `queryKey`: state (data, error, ' +
-    'dataUpdatedAt, fetch counts…), options (staleTime, gcTime, enabled, retry, meta…), observers, and whether it is stale/active. ' +
-    'Cached data is returned collapsed beyond the budget — pass `expand` paths (relative to {state, options, data}) to drill in.',
+    'Full detail of one query by `queryHash` (preferred, from list_queries) or exact `queryKey`: state, options ' +
+    '(staleTime, gcTime, enabled…), observers, staleness. Data collapses beyond the budget — `expand` paths (relative to {state, options, data}) drill in.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -55,7 +53,7 @@ export const getQueryMeta: ToolMeta = {
 export const listMutationsMeta: ToolMeta = {
   name: 'tanstack_query_list_mutations',
   title: 'List TanStack mutations',
-  description: 'List mutations in the MutationCache: mutationId, mutationKey, status (idle/pending/success/error), submittedAt, failureCount, isPaused and a variables preview.',
+  description: 'List mutations in the MutationCache: mutationId, mutationKey, status, submittedAt, failureCount, isPaused and a variables preview.',
   inputSchema: {
     type: 'object',
     properties: {

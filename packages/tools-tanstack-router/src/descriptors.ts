@@ -8,9 +8,8 @@ export const routerGetStateMeta: ToolMeta = {
   name: 'tanstack_router_get_state',
   title: 'Router state',
   description:
-    'Current TanStack Router state: status (idle/pending), isLoading, location (pathname, search, hash, href), resolvedLocation, and ' +
-    'the active matches (routeId, pathname, params, search, status, isFetching, error, whether loaderData is present). Use ' +
-    'tanstack_router_get_match for loaderData/context of one match. `expand` paths are relative to {location, matches}.',
+    'Current TanStack Router state: status, isLoading, location, resolvedLocation and the active matches (routeId, params, ' +
+    'search, status, error…). Use tanstack_router_get_match for loaderData/context of one match. `expand` paths are relative to {location, matches}.',
   inputSchema: { type: 'object', properties: { expand: { type: 'array', items: pathSchema }, budget: budgetSchema }, additionalProperties: false },
   annotations: RO,
   capability: CAP,

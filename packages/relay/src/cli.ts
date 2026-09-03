@@ -1,5 +1,6 @@
 import { parseArgs } from 'node:util';
 import { DEFAULTS } from '@devtools-mcp/protocol';
+import { runCall } from './call.js';
 import { loadOrCreateConfig } from './config.js';
 import { daemonLogFile, ensureRelayDaemon, stopRelayDaemon } from './daemon.js';
 import { runDoctor, type Check } from './doctor.js';
@@ -7,31 +8,44 @@ import { RELAY_VERSION, startRelay } from './index.js';
 import { runInit } from './init.js';
 import { log, setLogLevel, type Level } from './log.js';
 import { proxyStdioToHttp } from './proxy.js';
+import { refreshSkillIfStale, SKILL_DEFAULT_PATH, writeSkill } from './skill.js';
 
-// ---- subcommands: init / doctor / stop ----
+/** Rewrite a previously generated SKILL.md after a package update; never creates one. Best-effort. */
+function refreshSkill(): void {
+  try {
+    const r = refreshSkillIfStale();
+    if (r) log('info', `updated ${r.path} (v${r.from} → v${r.to})`);
+  } catch (e) {
+    log('debug', `skill refresh skipped: ${(e as Error).message}`);
+  }
+}
+
+// ---- subcommands: init / doctor / stop / call / skill ----
 const [sub, ...subArgs] = process.argv.slice(2);
 if (sub === 'init') {
   const { values: v } = parseArgs({
     args: subArgs,
-    options: { out: { type: 'string', short: 'o' }, port: { type: 'string', short: 'p' }, http: { type: 'boolean' }, 'external-playwright': { type: 'boolean' }, help: { type: 'boolean', short: 'h' } },
+    options: { out: { type: 'string', short: 'o' }, port: { type: 'string', short: 'p' }, http: { type: 'boolean' }, 'external-playwright': { type: 'boolean' }, 'no-skill': { type: 'boolean' }, help: { type: 'boolean', short: 'h' } },
     strict: true,
   });
   if (v.help) {
     process.stdout.write(`Usage: agent-debug-mcp init [options]
 
-Write (or merge into) an MCP client config with the agent-debug relay wired up. Browser automation
+Write (or merge into) an MCP client config with the agent-debug relay wired up, plus the Claude Code skill
+(${SKILL_DEFAULT_PATH}; kept fresh automatically on package updates). Browser automation
 (page_* tools, embedded Playwright MCP) is built into the relay — no second server needed.
 
   -o, --out <file>            Config file (default .mcp.json; Cursor: .cursor/mcp.json)
   -p, --port <n>              Relay port (default ${DEFAULTS.relayPort})
       --http                  Reference a running relay over HTTP instead of spawning it over stdio
       --external-playwright   Also add a separate @playwright/mcp server pointed at the relay's CDP endpoint
+      --no-skill              Do not write the Claude Code skill file
 `);
     process.exit(0);
   }
   try {
-    const r = runInit({ out: v.out, port: v.port ? Number(v.port) : undefined, transport: v.http ? 'http' : 'stdio', externalPlaywright: !!v['external-playwright'] });
-    process.stdout.write(`${r.created ? 'Wrote' : 'Updated'} ${r.path}\n\n${JSON.stringify(r.config.mcpServers, null, 2)}\n
+    const r = runInit({ out: v.out, port: v.port ? Number(v.port) : undefined, transport: v.http ? 'http' : 'stdio', externalPlaywright: !!v['external-playwright'], skill: !v['no-skill'] });
+    process.stdout.write(`${r.created ? 'Wrote' : 'Updated'} ${r.path}\n${r.skill ? `${r.skill.created ? 'Wrote' : 'Updated'} ${r.skill.path}\n` : ''}\n${JSON.stringify(r.config.mcpServers, null, 2)}\n
 Next:
   1. Load the extension: chrome://extensions → Developer mode → Load unpacked → packages/extension/.output/chrome-mv3
   2. Restart your MCP client (or run npx agent-debug-mcp) — the extension pairs with the relay by itself while Chrome is open${
@@ -101,6 +115,94 @@ Live MCP sessions are not broken for good: their proxies respawn the daemon on t
   process.stdout.write(`${r.detail}\n`);
   process.exit(r.status === 'foreign' ? 1 : 0);
 }
+if (sub === 'call') {
+  const { values: v, positionals } = parseArgs({
+    args: subArgs,
+    options: { port: { type: 'string', short: 'p' }, 'http-token': { type: 'string' }, list: { type: 'boolean' }, describe: { type: 'boolean' }, help: { type: 'boolean', short: 'h' } },
+    allowPositionals: true,
+    strict: true,
+  });
+  if (v.help || (!v.list && positionals.length === 0)) {
+    process.stdout.write(`Usage: agent-debug-mcp call <tool> ['<json-args>'] [options]
+       agent-debug-mcp call --list
+       agent-debug-mcp call --describe <tool>
+
+Call one MCP tool on the shared relay daemon (started automatically if needed) and print the result —
+the skill/CLI alternative to keeping the MCP server's tool definitions resident in an agent's context.
+
+      --list            List every advertised tool (including the page_* browser automation set)
+      --describe <tool> Print the full definition (input JSON Schema) of one tool
+  -p, --port <n>        Relay port (default ${DEFAULTS.relayPort})
+      --http-token <t>  Bearer token if the relay runs with --http-token
+`);
+    process.exit(v.help ? 0 : 1);
+  }
+  let args: Record<string, unknown> | undefined;
+  if (!v.list && !v.describe && positionals[1] !== undefined) {
+    try {
+      const parsed: unknown = JSON.parse(positionals[1]);
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) throw new Error('not a JSON object');
+      args = parsed as Record<string, unknown>;
+    } catch (e) {
+      process.stderr.write(`invalid json-args: ${(e as Error).message}\n`);
+      process.exit(1);
+    }
+  }
+  refreshSkill();
+  try {
+    const outcome = await runCall({
+      tool: v.describe ? undefined : positionals[0],
+      args,
+      list: v.list,
+      describe: v.describe ? positionals[0] : undefined,
+      port: v.port ? Number(v.port) : undefined,
+      httpToken: v['http-token'],
+      version: RELAY_VERSION,
+    });
+    if (outcome.kind === 'list') {
+      for (const t of outcome.tools) process.stdout.write(`${t.name} — ${(t.description ?? '').split('\n')[0]}\n`);
+    } else if (outcome.kind === 'describe') {
+      process.stdout.write(`${JSON.stringify(outcome.tool, null, 2)}\n`);
+    } else {
+      for (const c of outcome.result.content ?? []) process.stdout.write(`${c.type === 'text' ? c.text : `[${c.type}]`}\n`);
+      process.exit(outcome.result.isError ? 1 : 0);
+    }
+    process.exit(0);
+  } catch (e) {
+    process.stderr.write(`call failed: ${(e as Error).message}\n`);
+    process.exit(1);
+  }
+}
+if (sub === 'skill') {
+  const { values: v } = parseArgs({
+    args: subArgs,
+    options: { out: { type: 'string', short: 'o' }, help: { type: 'boolean', short: 'h' } },
+    strict: true,
+  });
+  if (v.help) {
+    process.stdout.write(`Usage: agent-debug-mcp skill [--out <file>]
+
+Write a Claude Code skill that drives Agent Debug MCP through \`agent-debug-mcp call\` (Bash) instead of
+resident MCP tools: only the skill's one-line description stays in the agent's context until it triggers,
+instead of the full tool list on every conversation. With the skill installed, no .mcp.json entry is needed.
+
+  -o, --out <file>   Output file (default ${SKILL_DEFAULT_PATH})
+`);
+    process.exit(0);
+  }
+  try {
+    const r = writeSkill({ out: v.out });
+    process.stdout.write(`${r.created ? 'Wrote' : 'Updated'} ${r.path}
+
+The skill calls tools via \`npx -y agent-debug-mcp call <tool>\` — no MCP server entry needed (remove the
+agent-debug entry from .mcp.json to stop paying for resident tool definitions). Load the extension as usual.
+`);
+    process.exit(0);
+  } catch (e) {
+    process.stderr.write(`skill failed: ${(e as Error).message}\n`);
+    process.exit(1);
+  }
+}
 
 const { values } = parseArgs({
   options: {
@@ -128,6 +230,8 @@ Usage: agent-debug-mcp [options]
        agent-debug-mcp init [--out <file>] [--port <n>] [--http] [--external-playwright]
        agent-debug-mcp doctor [url] [--port <n>] [--config <file>] [--wait <ms>]
        agent-debug-mcp stop [--port <n>]
+       agent-debug-mcp call <tool> ['<json-args>'] | --list | --describe <tool>
+       agent-debug-mcp skill [--out <file>]
 
 In a terminal (TTY) the relay runs in this process. Spawned by an MCP client (stdio), the process instead
 ensures a shared *detached* relay daemon on the port and proxies stdio to it, so the relay — and with it the
@@ -150,6 +254,8 @@ extension pairing and any CDP client — survives MCP client restarts and is sha
   init    write/merge .mcp.json with the agent-debug relay wired up (browser page_* tools built in)
   doctor  check relay → extension → CDP → app tab and print a fix for each problem
   stop    stop the detached relay daemon
+  call    call one tool on the relay daemon from the shell (used by the Claude Code skill)
+  skill   write a Claude Code skill that replaces the resident MCP tool list (~145 tokens instead of ~7k)
 `);
   process.exit(0);
 }
@@ -171,6 +277,8 @@ if (host && host !== '127.0.0.1' && host !== 'localhost') {
 // `--no-daemon` restores the in-process behavior; `--no-http` implies it (the proxy needs /mcp).
 if (stdio && !values['no-daemon'] && !values['no-http']) {
   setLogLevel((values['log-level'] as Level | undefined) ?? 'info');
+  refreshSkill(); // MCP clients spawn this in the project directory — pick up a package update there
+
   const h = host ?? '127.0.0.1';
   const p = port ?? loadOrCreateConfig(DEFAULTS.relayPort).port;
   const daemonArgs: string[] = [];

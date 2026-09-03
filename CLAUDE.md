@@ -34,6 +34,8 @@ pnpm test:e2e                                    # Playwright; starts the demo a
 pnpm dev:relay                                   # tsx packages/relay/src/cli.ts (extension pairs by itself; prints the CDP URL)
 pnpm --filter agent-debug-mcp exec tsx src/cli.ts init     # write/merge .mcp.json (single agent-debug entry; --external-playwright adds a separate Playwright MCP)
 pnpm --filter agent-debug-mcp exec tsx src/cli.ts doctor <url>   # check relay → extension → CDP → tab, with fixes
+pnpm --filter agent-debug-mcp exec tsx src/cli.ts skill    # write .claude/skills/agent-debug/SKILL.md (skill+CLI alternative to resident MCP tools; body generated from the descriptors; init also writes it, and the stdio proxy / call auto-refresh it on version bumps via its marker)
+pnpm --filter agent-debug-mcp exec tsx src/cli.ts call <tool> ['<json>']   # one-shot tool call on the relay daemon (also --list / --describe <tool>)
 pnpm dev:demo                                    # demo app on http://localhost:5199
 pnpm --filter agent-debug-mcp exec tsx ../../scripts/gen-tool-docs.mts   # regenerate docs/TOOLS.md (maintainer-local script, git-ignored)
 bash scripts/release.sh [patch|minor|major|x.y.z] [--dry-run]   # maintainer-local: bump ext+relay, zip extension → releases/, publish to npm, commit+tag
@@ -86,7 +88,7 @@ The e2e suite loads `packages/extension/.output/chrome-mv3` — rebuild the exte
    `main.content.ts` and fed by `installErrorCapture` (tools-react: console/window hooks + current-fiber component
    stacks), `captureQueryErrors` and `captureRouterErrors`. `page_get_errors` only reads it. New error sources push
    into that log; do not add a second buffer.
-9. **Errors** are `DevtoolsError(code, message, {hint, data, retryable})` with codes from `protocol/src/errors.ts`.
+9. **Errors** are `AgentDebugError(code, message, {hint, data, retryable})` with codes from `protocol/src/errors.ts`.
    Add a hint the agent can act on. Element ids and cursors are doc-scoped → `STALE_ELEMENT` / `STALE_CURSOR`.
 
 ## Adding a tool (checklist)

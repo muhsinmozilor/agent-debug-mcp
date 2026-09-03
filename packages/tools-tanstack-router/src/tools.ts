@@ -1,5 +1,5 @@
 import {
-  DevtoolsError,
+  AgentDebugError,
   decodeCursor,
   defineTool,
   encode,
@@ -96,7 +96,7 @@ export function createTanstackRouterTools(ctx: ToolContext): ToolDefinition<unkn
       let start = 0;
       if (cursor) {
         const c = decodeCursor(cursor);
-        if (!c || c.kind !== 'routes' || c.doc !== ctx.docId) throw new DevtoolsError('STALE_CURSOR', 'Invalid or stale cursor');
+        if (!c || c.kind !== 'routes' || c.doc !== ctx.docId) throw new AgentDebugError('STALE_CURSOR', 'Invalid or stale cursor');
         start = Number(c.pos);
       }
       const slice = all.slice(start, start + max);
@@ -131,8 +131,8 @@ export function createTanstackRouterTools(ctx: ToolContext): ToolDefinition<unkn
       const router = requireRouter();
       const all = [...router.state.matches, ...(router.state.pendingMatches ?? [])];
       const m = matchId ? all.find((x) => x.id === matchId) : routeId ? all.find((x) => x.routeId === routeId) : undefined;
-      if (!matchId && !routeId) throw new DevtoolsError('INVALID_INPUT', 'Provide matchId or routeId');
-      if (!m) throw new DevtoolsError('INVALID_INPUT', `No active match for ${matchId ?? routeId}`, { hint: 'Call tanstack_router_get_state to see active matches.' });
+      if (!matchId && !routeId) throw new AgentDebugError('INVALID_INPUT', 'Provide matchId or routeId');
+      if (!m) throw new AgentDebugError('INVALID_INPUT', `No active match for ${matchId ?? routeId}`, { hint: 'Call tanstack_router_get_state to see active matches.' });
       const b: Partial<EncodeBudget> = { depth: 2, ...(budget ?? {}) };
       const out: Record<string, unknown> = {
         ...summariseMatch(m, b),
@@ -163,7 +163,7 @@ export function createTanstackRouterTools(ctx: ToolContext): ToolDefinition<unkn
       try {
         await router.navigate(opts);
       } catch (e) {
-        throw new DevtoolsError('PAGE_ERROR', `navigate failed: ${(e as Error).message}`);
+        throw new AgentDebugError('PAGE_ERROR', `navigate failed: ${(e as Error).message}`);
       }
       const settled = await waitForIdle(router, waitMs ?? 10_000, signal);
       return { settled, ...snapshot({}) };

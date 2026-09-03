@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TabRegistry } from '../src/tabs.js';
 import { InvokeTracker } from '../src/invoke.js';
-import { DevtoolsError, makeFrame } from '@devtools-mcp/protocol';
+import { AgentDebugError, makeFrame } from '@devtools-mcp/protocol';
 
 const info = (tab: string, over: Partial<Parameters<TabRegistry['upsert']>[0]> = {}) => ({
   tab,
@@ -25,13 +25,13 @@ describe('TabRegistry.resolve', () => {
   });
   it('throws TAB_NOT_FOUND with hint when none attached or unknown handle', () => {
     const r = new TabRegistry();
-    expect(() => r.resolve(undefined)).toThrow(DevtoolsError);
+    expect(() => r.resolve(undefined)).toThrow(AgentDebugError);
     r.upsert(info('t1'));
     try {
       r.resolve('t9');
     } catch (e) {
-      expect((e as DevtoolsError).code).toBe('TAB_NOT_FOUND');
-      expect((e as DevtoolsError).data).toMatchObject({ tabs: [{ tab: 't1' }] });
+      expect((e as AgentDebugError).code).toBe('TAB_NOT_FOUND');
+      expect((e as AgentDebugError).data).toMatchObject({ tabs: [{ tab: 't1' }] });
     }
   });
   it('throws AMBIGUOUS_TAB with candidates when several attached', () => {
@@ -42,7 +42,7 @@ describe('TabRegistry.resolve', () => {
       r.resolve(undefined);
       throw new Error('should throw');
     } catch (e) {
-      expect((e as DevtoolsError).code).toBe('AMBIGUOUS_TAB');
+      expect((e as AgentDebugError).code).toBe('AMBIGUOUS_TAB');
     }
   });
   it('ignores frozen tabs for implicit resolution and rejects them explicitly', () => {

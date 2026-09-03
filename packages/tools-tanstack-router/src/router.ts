@@ -1,4 +1,4 @@
-import { DevtoolsError, watchGlobal } from '@devtools-mcp/protocol';
+import { AgentDebugError, watchGlobal } from '@devtools-mcp/protocol';
 
 export interface MatchLike {
   id: string;
@@ -72,7 +72,7 @@ export function findRouter(target: typeof globalThis = globalThis): RouterLike |
 export function requireRouter(target: typeof globalThis = globalThis): RouterLike {
   const r = findRouter(target);
   if (!r) {
-    throw new DevtoolsError('CAPABILITY_UNAVAILABLE', 'No TanStack Router found on window.__TANSTACK_ROUTER__ (or window.router)', {
+    throw new AgentDebugError('CAPABILITY_UNAVAILABLE', 'No TanStack Router found on window.__TANSTACK_ROUTER__ (or window.router)', {
       hint: 'In the app entry add: `if (import.meta.env.DEV) window.__TANSTACK_ROUTER__ = router`.',
       data: { capability: 'tanstack_router' },
     });

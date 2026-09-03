@@ -7,7 +7,7 @@ import type { IncomingMessage } from 'node:http';
 import { WebSocketServer, type WebSocket } from 'ws';
 import {
   DEFAULTS,
-  DevtoolsError,
+  AgentDebugError,
   makeFrame,
   parseFrame,
   PROTOCOL_VERSION,
@@ -39,7 +39,7 @@ export class ExtensionLink extends EventEmitter implements CdpLink {
   private pruneTimer: ReturnType<typeof setTimeout> | null = null;
   private pingCounter = 0;
   private resumeId: string | null = null;
-  private openRequests = new Map<string, { resolve: (tab: TabHandle) => void; reject: (e: DevtoolsError) => void; timer: ReturnType<typeof setTimeout> }>();
+  private openRequests = new Map<string, { resolve: (tab: TabHandle) => void; reject: (e: AgentDebugError) => void; timer: ReturnType<typeof setTimeout> }>();
   private cdpRequests = new Map<string, { resolve: (r: CdpResponse) => void; reject: (e: Error) => void; timer: ReturnType<typeof setTimeout> }>();
   private cdpCommands = new Map<number, { resolve: (r: unknown) => void; reject: (e: CdpError) => void }>();
   private cdpCmdCounter = 0;
@@ -157,7 +157,7 @@ export class ExtensionLink extends EventEmitter implements CdpLink {
     }
     if (!sameSession) {
       // New extension session (SW restart or reinstall): in-flight calls cannot complete.
-      this.calls.failAll(new DevtoolsError('EXTENSION_RESTARTED', 'The extension restarted while the call was in flight'));
+      this.calls.failAll(new AgentDebugError('EXTENSION_RESTARTED', 'The extension restarted while the call was in flight'));
     }
     this.startHeartbeat();
     log('info', `extension connected (v${extVersion}, resume=${resumeId ?? 'none'}, sameSession=${sameSession})`);
@@ -174,7 +174,7 @@ export class ExtensionLink extends EventEmitter implements CdpLink {
       if (removed.length) log('info', `dropped ${removed.length} stale tab(s)`);
       this.emit('tabs');
     }, STALE_GRACE_MS + 50);
-    this.calls.failAll(new DevtoolsError('EXTENSION_DISCONNECTED', 'The extension disconnected while the call was in flight'));
+    this.calls.failAll(new AgentDebugError('EXTENSION_DISCONNECTED', 'The extension disconnected while the call was in flight'));
     this.failCdp('The extension disconnected');
     this.emit('disconnected');
   }
@@ -242,7 +242,7 @@ export class ExtensionLink extends EventEmitter implements CdpLink {
         return;
       }
       case 'tab.navigated':
-        this.calls.failAll(new DevtoolsError('DOC_CHANGED', 'The page navigated while the call was in flight'), (p) => p.tab === frame.tab);
+        this.calls.failAll(new AgentDebugError('DOC_CHANGED', 'The page navigated while the call was in flight'), (p) => p.tab === frame.tab);
         this.tabs.navigate(frame.tab as TabHandle, frame.doc, frame.url, frame.title);
         this.emit('tabs');
         return;
@@ -253,7 +253,7 @@ export class ExtensionLink extends EventEmitter implements CdpLink {
         this.tabs.setState(frame.tab as TabHandle, 'attached');
         return;
       case 'tab.detached':
-        this.calls.failAll(new DevtoolsError('TAB_NOT_FOUND', 'The tab closed while the call was in flight'), (p) => p.tab === frame.tab);
+        this.calls.failAll(new AgentDebugError('TAB_NOT_FOUND', 'The tab closed while the call was in flight'), (p) => p.tab === frame.tab);
         this.tabs.remove(frame.tab as TabHandle);
         this.emit('tabs');
         return;
@@ -271,9 +271,9 @@ export class ExtensionLink extends EventEmitter implements CdpLink {
         if (!req) return;
         clearTimeout(req.timer);
         this.openRequests.delete(frame.requestId);
-        if (frame.error) req.reject(DevtoolsError.from(frame.error));
+        if (frame.error) req.reject(AgentDebugError.from(frame.error));
         else if (frame.tab) req.resolve(frame.tab as TabHandle);
-        else req.reject(new DevtoolsError('PAGE_ERROR', 'Extension returned neither a tab nor an error'));
+        else req.reject(new AgentDebugError('PAGE_ERROR', 'Extension returned neither a tab nor an error'));
         return;
       }
       case 'cdp.response': {
@@ -281,7 +281,7 @@ export class ExtensionLink extends EventEmitter implements CdpLink {
         if (!req) return;
         clearTimeout(req.timer);
         this.cdpRequests.delete(frame.requestId);
-        if (frame.error) req.reject(DevtoolsError.from(frame.error));
+        if (frame.error) req.reject(AgentDebugError.from(frame.error));
         else {
           const res: CdpResponse = {};
           if (frame.tab) res.tab = frame.tab as TabHandle;
@@ -312,7 +312,7 @@ export class ExtensionLink extends EventEmitter implements CdpLink {
 
   /** Cancel an in-flight call (client-side cancellation received out of band). */
   cancelCall(callId: string, reason: 'client' | 'timeout' | 'tab_gone' = 'client'): boolean {
-    const p = this.calls.cancel(callId, new DevtoolsError('CANCELLED', 'The client cancelled the request'));
+    const p = this.calls.cancel(callId, new AgentDebugError('CANCELLED', 'The client cancelled the request'));
     if (!p) return false;
     this.send(makeFrame({ t: 'invoke.cancel', callId, tab: p.tab as TabHandle, reason }));
     return true;
@@ -321,13 +321,13 @@ export class ExtensionLink extends EventEmitter implements CdpLink {
   /** Ask the extension to open a tab; resolves with its handle once Chrome created it. */
   openTab(url: string, timeoutMs = 10_000): Promise<TabHandle> {
     if (!this.connected) {
-      return Promise.reject(new DevtoolsError('EXTENSION_DISCONNECTED', 'The Agent Debug MCP Chrome extension is not connected to this relay'));
+      return Promise.reject(new AgentDebugError('EXTENSION_DISCONNECTED', 'The Agent Debug MCP Chrome extension is not connected to this relay'));
     }
     const requestId = this.calls.nextCallId();
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.openRequests.delete(requestId);
-        reject(new DevtoolsError('TIMEOUT', 'The extension did not open the tab in time'));
+        reject(new AgentDebugError('TIMEOUT', 'The extension did not open the tab in time'));
       }, timeoutMs);
       this.openRequests.set(requestId, { resolve, reject, timer });
       this.send(makeFrame({ t: 'tab.open', requestId, url }));
@@ -339,13 +339,13 @@ export class ExtensionLink extends EventEmitter implements CdpLink {
   /** Browser-level CDP operation carried out by the service worker (attach/detach debugger, open/close/activate a tab). */
   cdpRequest(op: CdpOp, opts: { tab?: TabHandle; url?: string } = {}, timeoutMs = 15_000): Promise<CdpResponse> {
     if (!this.connected) {
-      return Promise.reject(new DevtoolsError('EXTENSION_DISCONNECTED', 'The Agent Debug MCP Chrome extension is not connected to this relay'));
+      return Promise.reject(new AgentDebugError('EXTENSION_DISCONNECTED', 'The Agent Debug MCP Chrome extension is not connected to this relay'));
     }
     const requestId = this.calls.nextCallId();
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.cdpRequests.delete(requestId);
-        reject(new DevtoolsError('TIMEOUT', `The extension did not answer cdp.request ${op} within ${Math.round(timeoutMs / 1000)} s`));
+        reject(new AgentDebugError('TIMEOUT', `The extension did not answer cdp.request ${op} within ${Math.round(timeoutMs / 1000)} s`));
       }, timeoutMs);
       this.cdpRequests.set(requestId, { resolve, reject, timer });
       const frame = makeFrame({ t: 'cdp.request', requestId, op });
@@ -372,7 +372,7 @@ export class ExtensionLink extends EventEmitter implements CdpLink {
     for (const [id, req] of this.cdpRequests) {
       clearTimeout(req.timer);
       this.cdpRequests.delete(id);
-      req.reject(new DevtoolsError('EXTENSION_DISCONNECTED', `${why} while the CDP request was in flight`));
+      req.reject(new AgentDebugError('EXTENSION_DISCONNECTED', `${why} while the CDP request was in flight`));
     }
     for (const [id, cmd] of this.cdpCommands) {
       this.cdpCommands.delete(id);
@@ -399,7 +399,7 @@ export class ExtensionLink extends EventEmitter implements CdpLink {
   ): Promise<{ result: unknown; doc: string; truncated: boolean }> {
     if (!this.connected) {
       return Promise.reject(
-        new DevtoolsError('EXTENSION_DISCONNECTED', 'The Agent Debug MCP Chrome extension is not connected to this relay', {
+        new AgentDebugError('EXTENSION_DISCONNECTED', 'The Agent Debug MCP Chrome extension is not connected to this relay', {
           hint: 'Make sure Chrome is open with the Agent Debug MCP extension loaded — it pairs with a relay on 127.0.0.1:9333 by itself. For another host/port, click Pair in the extension popup or open the relay\'s /pair URL. Run `npx agent-debug-mcp doctor` to see which link is broken.',
         }),
       );
@@ -414,7 +414,7 @@ export class ExtensionLink extends EventEmitter implements CdpLink {
         (p: PendingCall) => this.send(makeFrame({ t: 'invoke.cancel', callId: p.callId, tab: p.tab as TabHandle, reason: 'timeout' })),
       );
       const onAbort = (): void => {
-        this.calls.cancel(pending.callId, new DevtoolsError('CANCELLED', 'The client cancelled the request'));
+        this.calls.cancel(pending.callId, new AgentDebugError('CANCELLED', 'The client cancelled the request'));
         this.send(makeFrame({ t: 'invoke.cancel', callId: pending.callId, tab, reason: 'client' }));
       };
       if (options.signal) {
@@ -433,7 +433,7 @@ export class ExtensionLink extends EventEmitter implements CdpLink {
   close(): void {
     this.stopHeartbeat();
     if (this.pruneTimer) clearTimeout(this.pruneTimer);
-    this.calls.failAll(new DevtoolsError('EXTENSION_DISCONNECTED', 'Relay shutting down'));
+    this.calls.failAll(new AgentDebugError('EXTENSION_DISCONNECTED', 'Relay shutting down'));
     this.failCdp('Relay shutting down');
     this.socket?.close(1001, 'relay shutting down');
     this.wss.close();

@@ -23,6 +23,15 @@ host/port enter it in the extension popup or open `http://<host>:<port>/pair` on
   or `{"type":"http","url":"http://127.0.0.1:9333/mcp"}` when the relay is already running.
 - **Cursor** — same JSON in `.cursor/mcp.json`. **Codex** — `[mcp_servers."agent-debug"] command="npx" args=["-y","agent-debug-mcp"]`.
 
+**Zero-context alternative (Claude Code):** `npx agent-debug-mcp skill` writes a
+[skill](https://docs.claude.com/en/docs/claude-code/skills) to `.claude/skills/agent-debug/SKILL.md` instead —
+no `.mcp.json` entry needed. Only the skill's one-line description (~80 tokens) sits in the agent's context until
+a debugging task triggers it; the tools are then invoked through `npx agent-debug-mcp call <tool>`, which starts
+and reuses the same shared relay daemon. Resident MCP tool definitions cost ~15k tokens in every conversation;
+the skill costs ~80. `init` writes the skill automatically alongside `.mcp.json` (`--no-skill` opts out), and a
+generated skill is refreshed automatically after a package update the next time the relay or `call` runs in the
+project.
+
 A second stdio launch while a relay is already running on the port becomes a thin proxy to it, so several
 agent sessions share one relay and one browser.
 
@@ -89,9 +98,15 @@ Full reference with parameters: [docs/TOOLS.md](https://github.com/muhsinmozilor
 ```
 agent-debug-mcp                 run the relay (stdio when stdin is not a TTY, plus HTTP)
 agent-debug-mcp init            write/merge .mcp.json with the agent-debug relay (browser page_* tools built in)
-                                   -o .cursor/mcp.json   --port <n>   --http   --external-playwright
+                                plus the Claude Code skill (see below)
+                                   -o .cursor/mcp.json   --port <n>   --http   --external-playwright   --no-skill
 agent-debug-mcp doctor [url]    check relay → extension → CDP → app tab (React/TanStack/mutations); prints fixes
                                    --port <n>   --config <file>   --wait <ms>   --http-token <t>   --no-start
+agent-debug-mcp skill           write a Claude Code skill (.claude/skills/agent-debug/SKILL.md) that replaces
+                                the resident MCP tool list — ~80 context tokens instead of ~15k
+                                   -o <file>
+agent-debug-mcp call <tool>     call one tool on the relay daemon from the shell (what the skill uses)
+                                   '<json-args>'   --list   --describe <tool>   --port <n>   --http-token <t>
 ```
 
 ## Options

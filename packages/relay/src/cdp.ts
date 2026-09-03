@@ -57,7 +57,7 @@ interface CdpMessage {
   sessionId?: string;
 }
 
-const BROWSER_TARGET = { targetId: 'devtools-mcp-browser', type: 'browser', title: 'Agent Debug MCP', url: '', attached: true, canAccessOpener: false };
+const BROWSER_TARGET = { targetId: 'agent-debug-mcp-browser', type: 'browser', title: 'Agent Debug MCP', url: '', attached: true, canAccessOpener: false };
 const CDP_PATH_RE = /^\/cdp\/([A-Za-z0-9_-]+)(\/json\/version\/?)?$/;
 
 export class CdpBridge {

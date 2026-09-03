@@ -4,7 +4,7 @@
  * actualDuration), and *why*: changed props keys, changed hook indices, class state, context, first
  * mount, or "parent" (nothing of its own changed).
  */
-import { DevtoolsError } from '@devtools-mcp/protocol';
+import { AgentDebugError } from '@devtools-mcp/protocol';
 import { isCompositeFiber, traverseRenderedFibers, type Fiber, type FiberRoot } from 'bippy';
 import { elementIdOf } from './elements.js';
 import { getAllRoots, onCommit } from './hook.js';
@@ -194,7 +194,7 @@ function ensureSubscribed(): void {
 
 export function startProfiling(recordChangeDescriptions = true): ProfileSession {
   if (session && session.stoppedAt === null) {
-    throw new DevtoolsError('PROFILE_ALREADY_RUNNING', 'A profiling session is already running', {
+    throw new AgentDebugError('PROFILE_ALREADY_RUNNING', 'A profiling session is already running', {
       hint: 'Call react_profile_stop first (or pass keepData=false to discard).',
       data: { startedAt: session.startedAt, commits: session.commits.length },
     });
@@ -206,7 +206,7 @@ export function startProfiling(recordChangeDescriptions = true): ProfileSession 
 
 export function stopProfiling(): ProfileSession {
   if (!session || session.stoppedAt !== null) {
-    throw new DevtoolsError('INVALID_INPUT', 'No profiling session is running', { hint: 'Call react_profile_start first.' });
+    throw new AgentDebugError('INVALID_INPUT', 'No profiling session is running', { hint: 'Call react_profile_start first.' });
   }
   session.stoppedAt = Date.now();
   return session;

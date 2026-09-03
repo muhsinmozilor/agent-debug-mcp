@@ -1,5 +1,5 @@
 import {
-  DevtoolsError,
+  AgentDebugError,
   decodeCursor,
   defineTool,
   encode,
@@ -91,8 +91,8 @@ function paginate<T, U>(all: T[], opts: { limit?: number; cursor?: string; docId
   let start = 0;
   if (opts.cursor) {
     const c = decodeCursor(opts.cursor);
-    if (!c || c.kind !== opts.kind) throw new DevtoolsError('STALE_CURSOR', 'Invalid cursor');
-    if (c.doc !== opts.docId) throw new DevtoolsError('STALE_CURSOR', 'Cursor belongs to a previous document');
+    if (!c || c.kind !== opts.kind) throw new AgentDebugError('STALE_CURSOR', 'Invalid cursor');
+    if (c.doc !== opts.docId) throw new AgentDebugError('STALE_CURSOR', 'Cursor belongs to a previous document');
     start = Number(c.pos);
   }
   const slice = all.slice(start, start + limit);
@@ -130,9 +130,9 @@ export function createTanstackQueryTools(ctx: ToolContext): ToolDefinition<unkno
       else if (queryKey) {
         const want = stable(queryKey);
         q = cache.getAll().find((x) => stable(x.queryKey) === want);
-      } else throw new DevtoolsError('INVALID_INPUT', 'Provide queryHash or queryKey');
+      } else throw new AgentDebugError('INVALID_INPUT', 'Provide queryHash or queryKey');
       if (!q) {
-        throw new DevtoolsError('INVALID_INPUT', `No query found for ${queryHash ?? stable(queryKey)}`, {
+        throw new AgentDebugError('INVALID_INPUT', `No query found for ${queryHash ?? stable(queryKey)}`, {
           hint: 'Call tanstack_query_list_queries to see current hashes.',
         });
       }
@@ -180,7 +180,7 @@ export function createTanstackQueryTools(ctx: ToolContext): ToolDefinition<unkno
     execute: ({ mutationId, expand, budget }) => {
       const client = requireQueryClient();
       const m = client.getMutationCache().getAll().find((x) => x.mutationId === mutationId);
-      if (!m) throw new DevtoolsError('INVALID_INPUT', `No mutation with id ${mutationId}`, { hint: 'Call tanstack_query_list_mutations.' });
+      if (!m) throw new AgentDebugError('INVALID_INPUT', `No mutation with id ${mutationId}`, { hint: 'Call tanstack_query_list_mutations.' });
       const b: Partial<EncodeBudget> = { depth: 2, ...(budget ?? {}) };
       const root = { state: m.state, options: m.options };
       const out: Record<string, unknown> = {
@@ -232,7 +232,7 @@ export function createTanstackQueryTools(ctx: ToolContext): ToolDefinition<unkno
         new Promise<void>((r) => setTimeout(() => ((timedOut = true), r()), waitMs)),
         new Promise<void>((r) => signal.addEventListener('abort', () => r(), { once: true })),
       ]);
-      if (signal.aborted) throw new DevtoolsError('CANCELLED', 'Cancelled while refetching');
+      if (signal.aborted) throw new AgentDebugError('CANCELLED', 'Cancelled while refetching');
       return { refetched: targets.length, timedOut, queries: affected(targets) };
     },
   });
@@ -245,7 +245,7 @@ export function createTanstackQueryTools(ctx: ToolContext): ToolDefinition<unkno
       try {
         decoded = decode(data);
       } catch (e) {
-        throw new DevtoolsError('INVALID_INPUT', `Cannot decode data: ${(e as Error).message}`);
+        throw new AgentDebugError('INVALID_INPUT', `Cannot decode data: ${(e as Error).message}`);
       }
       client.setQueryData(queryKey, decoded, updatedAt !== undefined ? { updatedAt } : undefined);
       const q = client.getQueryCache().findAll({ queryKey, exact: true })[0];

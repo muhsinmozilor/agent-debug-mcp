@@ -1,4 +1,4 @@
-import { DevtoolsError, decodeCursor, defineTool, encodeCursor, type Page } from '@devtools-mcp/protocol';
+import { AgentDebugError, decodeCursor, defineTool, encodeCursor, type Page } from '@devtools-mcp/protocol';
 import { reactProfileGetCommitsMeta, reactProfileStartMeta, reactProfileStopMeta, reactWatchRendersMeta } from '../descriptors.js';
 import { discardSession, getSession, isProfiling, onAnyCommit, startProfiling, stopProfiling, summarise, type CommitRecord } from '../profiler.js';
 import type { ToolContext } from './getTree.js';
@@ -36,7 +36,7 @@ export function createProfileTools(ctx: ToolContext) {
     ...reactProfileGetCommitsMeta,
     execute: ({ cursor, minDurationMs, component, limit }) => {
       const s = getSession();
-      if (!s) throw new DevtoolsError('INVALID_INPUT', 'No profile data. Call react_profile_start, interact, then react_profile_stop.');
+      if (!s) throw new AgentDebugError('INVALID_INPUT', 'No profile data. Call react_profile_start, interact, then react_profile_stop.');
       let commits = s.commits;
       if (minDurationMs !== undefined) commits = commits.filter((c) => (c.durationMs ?? 0) >= minDurationMs);
       let re: RegExp | null = null;
@@ -44,7 +44,7 @@ export function createProfileTools(ctx: ToolContext) {
         try {
           re = new RegExp(component, 'i');
         } catch (e) {
-          throw new DevtoolsError('INVALID_INPUT', `Invalid component regex: ${(e as Error).message}`);
+          throw new AgentDebugError('INVALID_INPUT', `Invalid component regex: ${(e as Error).message}`);
         }
         commits = commits.filter((c) => c.renders.some((r) => re!.test(r.name)));
       }
@@ -52,7 +52,7 @@ export function createProfileTools(ctx: ToolContext) {
       let startPos = 0;
       if (cursor) {
         const c = decodeCursor(cursor);
-        if (!c || c.kind !== 'commits' || c.doc !== ctx.docId || c.gen !== s.generation) throw new DevtoolsError('STALE_CURSOR', 'Cursor is stale (new profile or document)');
+        if (!c || c.kind !== 'commits' || c.doc !== ctx.docId || c.gen !== s.generation) throw new AgentDebugError('STALE_CURSOR', 'Cursor is stale (new profile or document)');
         startPos = Number(c.pos);
       }
       const slice = commits.slice(startPos, startPos + max).map((c) => (re ? { ...c, renders: c.renders.filter((r) => re!.test(r.name)) } : c));
@@ -72,7 +72,7 @@ export function createProfileTools(ctx: ToolContext) {
         try {
           re = new RegExp(filter.nameRegex, 'i');
         } catch (e) {
-          throw new DevtoolsError('INVALID_INPUT', `Invalid nameRegex: ${(e as Error).message}`);
+          throw new AgentDebugError('INVALID_INPUT', `Invalid nameRegex: ${(e as Error).message}`);
         }
       }
       return new Promise((resolve, reject) => {
@@ -92,7 +92,7 @@ export function createProfileTools(ctx: ToolContext) {
         const timer = setTimeout(finish, total);
         const onAbort = (): void => {
           cleanup();
-          reject(new DevtoolsError('CANCELLED', 'react_watch_renders cancelled by the client'));
+          reject(new AgentDebugError('CANCELLED', 'react_watch_renders cancelled by the client'));
         };
         signal.addEventListener('abort', onAbort, { once: true });
         function cleanup(): void {
