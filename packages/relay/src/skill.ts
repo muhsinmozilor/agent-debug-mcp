@@ -139,3 +139,20 @@ export function refreshSkillIfStale(opts: WriteSkillOptions = {}): RefreshSkillR
   writeFileSync(path, generateSkillMd({ version }));
   return { path, from: marker[1]!, to: version };
 }
+
+export type EnsureSkillResult = { path: string; action: 'created' } | (RefreshSkillResult & { action: 'updated' });
+
+/**
+ * Create the skill when it does not exist, refresh it when stale — the MCP-client entry point runs this so
+ * simply wiring up `npx -y agent-debug-mcp` publishes the skill. A hand-edited file (no marker) is never
+ * touched. Returns null when nothing was written.
+ */
+export function ensureSkill(opts: WriteSkillOptions = {}): EnsureSkillResult | null {
+  const path = resolve(opts.cwd ?? process.cwd(), opts.out ?? SKILL_DEFAULT_PATH);
+  if (!existsSync(path)) {
+    writeSkill(opts);
+    return { path, action: 'created' };
+  }
+  const r = refreshSkillIfStale(opts);
+  return r ? { ...r, action: 'updated' } : null;
+}

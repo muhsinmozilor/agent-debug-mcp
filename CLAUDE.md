@@ -34,7 +34,7 @@ pnpm test:e2e                                    # Playwright; starts the demo a
 pnpm dev:relay                                   # tsx packages/relay/src/cli.ts (extension pairs by itself; prints the CDP URL)
 pnpm --filter agent-debug-mcp exec tsx src/cli.ts init     # write/merge .mcp.json (single agent-debug entry; --external-playwright adds a separate Playwright MCP)
 pnpm --filter agent-debug-mcp exec tsx src/cli.ts doctor <url>   # check relay → extension → CDP → tab, with fixes
-pnpm --filter agent-debug-mcp exec tsx src/cli.ts skill    # write .claude/skills/agent-debug/SKILL.md (skill+CLI alternative to resident MCP tools; body generated from the descriptors; init also writes it, and the stdio proxy / call auto-refresh it on version bumps via its marker)
+pnpm --filter agent-debug-mcp exec tsx src/cli.ts skill    # write .claude/skills/agent-debug/SKILL.md (skill+CLI alternative to resident MCP tools; body generated from the descriptors; init and the stdio MCP entry also write it — AGENT_DEBUG_MCP_NO_SKILL=1 opts out — and the stdio entry / call auto-refresh it on version bumps via its marker)
 pnpm --filter agent-debug-mcp exec tsx src/cli.ts call <tool> ['<json>']   # one-shot tool call on the relay daemon (also --list / --describe <tool>)
 pnpm dev:demo                                    # demo app on http://localhost:5199
 pnpm --filter agent-debug-mcp exec tsx ../../scripts/gen-tool-docs.mts   # regenerate docs/TOOLS.md (maintainer-local script, git-ignored)

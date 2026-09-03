@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { RELAY_TOOL_METAS } from '../src/mcp.js';
-import { generateSkillMd, paramSummary, refreshSkillIfStale, writeSkill } from '../src/skill.js';
+import { ensureSkill, generateSkillMd, paramSummary, refreshSkillIfStale, writeSkill } from '../src/skill.js';
 
 describe('generateSkillMd', () => {
   const md = generateSkillMd();
@@ -79,5 +79,21 @@ describe('refreshSkillIfStale', () => {
     writeFileSync(path, '---\nname: agent-debug\n---\nhand-edited, no marker\n');
     expect(refreshSkillIfStale({ cwd, version: '0.0.3' })).toBeNull(); // user owns it now
     expect(readFileSync(path, 'utf8')).toContain('hand-edited');
+  });
+});
+
+describe('ensureSkill', () => {
+  it('creates when missing, updates when stale, leaves current and hand-edited files alone', () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'dtmcp-ensure-'));
+    const created = ensureSkill({ cwd, version: '0.0.1' });
+    expect(created).toMatchObject({ action: 'created', path: join(cwd, '.claude/skills/agent-debug/SKILL.md') });
+    expect(existsSync(created!.path)).toBe(true);
+
+    expect(ensureSkill({ cwd, version: '0.0.1' })).toBeNull(); // up to date
+    expect(ensureSkill({ cwd, version: '0.0.2' })).toMatchObject({ action: 'updated', from: '0.0.1', to: '0.0.2' });
+
+    writeFileSync(created!.path, 'hand-edited, no marker\n');
+    expect(ensureSkill({ cwd, version: '0.0.3' })).toBeNull(); // exists but user-owned → untouched
+    expect(readFileSync(created!.path, 'utf8')).toBe('hand-edited, no marker\n');
   });
 });

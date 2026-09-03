@@ -8,15 +8,26 @@ import { RELAY_VERSION, startRelay } from './index.js';
 import { runInit } from './init.js';
 import { log, setLogLevel, type Level } from './log.js';
 import { proxyStdioToHttp } from './proxy.js';
-import { refreshSkillIfStale, SKILL_DEFAULT_PATH, writeSkill } from './skill.js';
+import { ensureSkill, refreshSkillIfStale, SKILL_DEFAULT_PATH, writeSkill } from './skill.js';
 
-/** Rewrite a previously generated SKILL.md after a package update; never creates one. Best-effort. */
-function refreshSkill(): void {
+/**
+ * Keep the Claude Code skill in sync, best-effort. 'ensure' (the MCP-client stdio entry) also creates it, so
+ * wiring up `npx -y agent-debug-mcp` publishes the skill; 'refresh' (`call`) only updates a generated one.
+ * AGENT_DEBUG_MCP_NO_SKILL=1 opts out entirely (a deleted skill would otherwise come back on the next session).
+ */
+function syncSkill(mode: 'ensure' | 'refresh'): void {
+  if (process.env.AGENT_DEBUG_MCP_NO_SKILL) return;
   try {
-    const r = refreshSkillIfStale();
-    if (r) log('info', `updated ${r.path} (v${r.from} → v${r.to})`);
+    const r = mode === 'ensure' ? ensureSkill() : refreshSkillIfStale();
+    if (!r) return;
+    log(
+      'info',
+      'action' in r && r.action === 'created'
+        ? `wrote ${r.path} (Claude Code skill; hand-edit or set AGENT_DEBUG_MCP_NO_SKILL=1 to opt out)`
+        : `updated ${r.path} (v${(r as { from: string }).from} → v${(r as { to: string }).to})`,
+    );
   } catch (e) {
-    log('debug', `skill refresh skipped: ${(e as Error).message}`);
+    log('debug', `skill sync skipped: ${(e as Error).message}`);
   }
 }
 
@@ -148,7 +159,7 @@ the skill/CLI alternative to keeping the MCP server's tool definitions resident 
       process.exit(1);
     }
   }
-  refreshSkill();
+  syncSkill('refresh');
   try {
     const outcome = await runCall({
       tool: v.describe ? undefined : positionals[0],
@@ -277,7 +288,7 @@ if (host && host !== '127.0.0.1' && host !== 'localhost') {
 // `--no-daemon` restores the in-process behavior; `--no-http` implies it (the proxy needs /mcp).
 if (stdio && !values['no-daemon'] && !values['no-http']) {
   setLogLevel((values['log-level'] as Level | undefined) ?? 'info');
-  refreshSkill(); // MCP clients spawn this in the project directory — pick up a package update there
+  syncSkill('ensure'); // MCP clients spawn this in the project directory — publish the skill there and pick up package updates
 
   const h = host ?? '127.0.0.1';
   const p = port ?? loadOrCreateConfig(DEFAULTS.relayPort).port;
@@ -305,6 +316,8 @@ if (stdio && !values['no-daemon'] && !values['no-http']) {
     process.exit(1);
   }
 }
+
+if (stdio) syncSkill('ensure'); // --no-daemon / --no-http stdio variants are MCP-client entries too
 
 try {
   const relay = await startRelay({

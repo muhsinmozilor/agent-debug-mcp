@@ -28,9 +28,10 @@ host/port enter it in the extension popup or open `http://<host>:<port>/pair` on
 no `.mcp.json` entry needed. Only the skill's one-line description (~80 tokens) sits in the agent's context until
 a debugging task triggers it; the tools are then invoked through `npx agent-debug-mcp call <tool>`, which starts
 and reuses the same shared relay daemon. Resident MCP tool definitions cost ~15k tokens in every conversation;
-the skill costs ~80. `init` writes the skill automatically alongside `.mcp.json` (`--no-skill` opts out), and a
-generated skill is refreshed automatically after a package update the next time the relay or `call` runs in the
-project.
+the skill costs ~80. The skill publishes itself: the stdio entry (`npx -y agent-debug-mcp`, what your MCP client
+spawns) writes it on first run and refreshes a generated one after package updates, as do `init` (`--no-skill`
+opts out) and `call`. A hand-edited skill is never touched; set `AGENT_DEBUG_MCP_NO_SKILL=1` to disable the
+automatic write entirely.
 
 A second stdio launch while a relay is already running on the port becomes a thin proxy to it, so several
 agent sessions share one relay and one browser.

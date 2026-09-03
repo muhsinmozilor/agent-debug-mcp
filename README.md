@@ -81,10 +81,12 @@ npx agent-debug-mcp init -o .cursor/mcp.json   # Cursor
 ```
 
 `init` keeps any servers already in the file. It also writes a Claude Code skill
-(`.claude/skills/agent-debug/SKILL.md`, `--no-skill` opts out); with the skill you can even skip the `.mcp.json`
-entry entirely — tools are then invoked via `npx agent-debug-mcp call <tool>` at ~80 resident context tokens
-instead of the full MCP tool list, and the generated file refreshes itself after package updates
-(`npx agent-debug-mcp skill` writes just the skill). There is no pairing step: while Chrome is open, the extension finds the
+(`.claude/skills/agent-debug/SKILL.md`, `--no-skill` opts out) — as does the relay itself on its first stdio run,
+so wiring up the MCP server is enough to publish the skill. With the skill you can even skip the `.mcp.json`
+entry entirely: tools are then invoked via `npx agent-debug-mcp call <tool>` at ~80 resident context tokens
+instead of the full MCP tool list. The generated file refreshes itself after package updates; hand-edited files
+are never touched, and `AGENT_DEBUG_MCP_NO_SKILL=1` disables the automatic write (`npx agent-debug-mcp skill`
+writes just the skill). There is no pairing step: while Chrome is open, the extension finds the
 relay on `127.0.0.1:9333` by itself (popup shows **Connected** a few seconds after the relay starts, and the toolbar
 icon gets a green dot on connected tabs). Running the relay
 on another port? Enter `http://127.0.0.1:<port>` in the extension popup and click **Pair**, or open the relay's `/pair` URL once.
